@@ -38,12 +38,14 @@ backend/
 ## Setup Instructions
 
 1. **Clone the repository**
+
    ```sh
    git clone <your-repo-url>
    cd backend
    ```
 
 2. **Install dependencies**
+
    ```sh
    npm install
    ```
@@ -63,6 +65,7 @@ backend/
 ## Running the Project
 
 - **Development mode (with auto-reload):**
+
   ```sh
   npm run dev
   ```
@@ -76,6 +79,7 @@ backend/
 ## Linting
 
 To check code style and errors:
+
 ```sh
 npm run lint
 ```
@@ -90,6 +94,7 @@ npm run lint
 - `DELETE /users/:id` — Delete a user
 
 ## Notes
+
 - The server uses in-memory storage for new users and reads initial data from `json/data.json`.
 - Logging middleware is enabled for all requests.
 - You can customize the port using the `PORT` environment variable.
