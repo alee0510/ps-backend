@@ -1,3 +1,24 @@
 {
-  "users": []
+  "users": [
+    {
+      "id": "d1b88df4-947d-47d7-a5ff-e3a5b1cdfdd8",
+      "name": "alexa",
+      "email": "alexa@gmail.com",
+      "password": "lollipop",
+      "actice": true,
+      "role": "user",
+      "createdAt": "2025-08-07T04:23:31.216Z",
+      "updatedAt": "2025-08-07T04:23:31.216Z"
+    },
+    {
+      "id": "76e7aa2a-7184-42ff-a204-84810477285c",
+      "name": "lollipop",
+      "email": "lollipop@gmail.com",
+      "password": "lollipop",
+      "actice": true,
+      "role": "user",
+      "createdAt": "2025-08-07T04:35:00.558Z",
+      "updatedAt": "2025-08-07T04:35:00.558Z"
+    }
+  ]
 }
