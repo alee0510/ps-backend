@@ -3,7 +3,6 @@ import bodyParser from "body-parser";
 import crypto from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
-import * as Yup from "yup";
 import dotenv from "dotenv";
 
 // config dotenv
@@ -32,192 +31,190 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-// CRUD OPERATIONS
-const users: Array<{ id: string; name: string }> = [];
+// import user router
+import userRouter from "./routers/user";
 
-// GET: all users
-// URL: /users?name=John -> /users?name=John or /users?page=1&limit=10
-// Query: none -> /users
-// Method: GET
-// Description: Retrieve all users
-app.get("/users", async (req: Request, res: Response) => {
-  // TODO: implement filtering by name
-  // READ JSON file from (json/data.json)
-  const RAW_DATA = await fs.readFile("json/data.json", "utf-8");
-  const DATA = JSON.parse(RAW_DATA);
+// use user router
+app.use("/api", userRouter);
 
-  res.status(200).json({
-    success: true,
-    message: "Users retrieved successfully",
-    data: DATA.users, // Use DATA.users if it exists, otherwise use the in-memory users array
-  });
-});
+// // CRUD OPERATIONS
+// const users: Array<{ id: string; name: string }> = [];
 
-// GET: single user
-// URL: /users/:id -> /users/1
-// URL Params: id (string)
-// Query: none -> /users/1?name=John
-// Method: GET
-// Description: Retrieve a user by ID
-app.get("/users/:id", (req: Request, res: Response) => {
-  const userId = req.params.id;
-  const user = users.find((user) => user.id === userId);
+// // GET: all users
+// // URL: /users?name=John -> /users?name=John or /users?page=1&limit=10
+// // Query: none -> /users
+// // Method: GET
+// // Description: Retrieve all users
+// app.get("/users", async (req: Request, res: Response) => {
+//   // TODO: implement filtering by name
+//   // READ JSON file from (json/data.json)
+//   const RAW_DATA = await fs.readFile("json/data.json", "utf-8");
+//   const DATA = JSON.parse(RAW_DATA);
 
-  // Check if user exists
-  if (!user) {
-    return res.status(404).json({
-      success: false,
-      message: "User not found",
-      data: {},
-    });
-  }
+//   res.status(200).json({
+//     success: true,
+//     message: "Users retrieved successfully",
+//     data: DATA.users, // Use DATA.users if it exists, otherwise use the in-memory users array
+//   });
+// });
 
-  res.status(200).json({
-    success: true,
-    message: "User retrieved successfully",
-    data: user,
-  });
-});
+// // GET: single user
+// // URL: /users/:id -> /users/1
+// // URL Params: id (string)
+// // Query: none -> /users/1?name=John
+// // Method: GET
+// // Description: Retrieve a user by ID
+// app.get("/users/:id", (req: Request, res: Response) => {
+//   const userId = req.params.id;
+//   const user = users.find((user) => user.id === userId);
 
-// POST: register a new user
-// URL: /users
-// Body: { "name": "John Doe", "email": "", "password": "plain text" }
-// Method: POST
-// Description: Create a new user
-const RegisterSchema = Yup.object().shape({
-  name: Yup.string().required("Name is required"),
-  email: Yup.string()
-    .email("Invalid email format")
-    .required("Email is required"),
-  password: Yup.string()
-    .min(6, "Password must be at least 6 characters")
-    .required("Password is required"),
-});
-app.post("/users", async (req: Request, res: Response) => {
-  try {
-    // Validate request body -> Yup
-    await RegisterSchema.validate(req.body, { abortEarly: false });
+//   // Check if user exists
+//   if (!user) {
+//     return res.status(404).json({
+//       success: false,
+//       message: "User not found",
+//       data: {},
+//     });
+//   }
 
-    // Check data validation on current JSON file (email & name unique)
-    const FILE_PATH = path.join(__dirname, "../json/data.json");
-    const RAW_DATA = await fs.readFile(FILE_PATH, "utf-8");
-    const DATA = JSON.parse(RAW_DATA);
+//   res.status(200).json({
+//     success: true,
+//     message: "User retrieved successfully",
+//     data: user,
+//   });
+// });
 
-    // Check if email already exists
-    const existingUser = DATA.users.find(
-      (user: { email: string }) => user.email === req.body.email,
-    );
-    if (existingUser) {
-      throw new Error("Email already exists");
-    }
+// // POST: register a new user
+// // URL: /users
+// // Body: { "name": "John Doe", "email": "", "password": "plain text" }
+// // Method: POST
+// // Description: Create a new user
 
-    // create new user -> provide UID, plain text password, set createdAt and updatedAt
-    const newUser = {
-      id: crypto.randomUUID(),
-      name: req.body.name,
-      email: req.body.email,
-      password: req.body.password, // In a real application, hash the password before saving
-      actice: true, // Default status true
-      role: "user", // Default role
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+// app.post("/users", async (req: Request, res: Response) => {
+//   try {
+//     // Validate request body -> Yup
+//     await RegisterSchema.validate(req.body, { abortEarly: false });
 
-    // update JSON file (json/data.json)
-    DATA.users.push(newUser);
-    await fs.writeFile("json/data.json", JSON.stringify(DATA, null, 2));
+//     // Check data validation on current JSON file (email & name unique)
+//     const FILE_PATH = path.join(__dirname, "../json/data.json");
+//     const RAW_DATA = await fs.readFile(FILE_PATH, "utf-8");
+//     const DATA = JSON.parse(RAW_DATA);
 
-    // Respond with success
-    res.status(201).json({
-      success: true,
-      message: "User created successfully",
-      data: newUser,
-    });
-  } catch (error) {
-    if (error instanceof Yup.ValidationError) {
-      return res.status(400).json({
-        success: false,
-        message: "Validation error",
-        errors: error.errors,
-      });
-    } else if (error instanceof Error) {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-        data: {},
-      });
-    }
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      data: {},
-    });
-  }
-  // users.push({
-  //   id: crypto.randomUUID(),
-  //   name: req.body.name,
-  // });
+//     // Check if email already exists
+//     const existingUser = DATA.users.find(
+//       (user: { email: string }) => user.email === req.body.email,
+//     );
+//     if (existingUser) {
+//       throw new Error("Email already exists");
+//     }
 
-  // res.status(201).json({
-  //   success: true,
-  //   message: "User created successfully",
-  //   data: users[users.length - 1],
-  // });
-});
+//     // create new user -> provide UID, plain text password, set createdAt and updatedAt
+//     const newUser = {
+//       id: crypto.randomUUID(),
+//       name: req.body.name,
+//       email: req.body.email,
+//       password: req.body.password, // In a real application, hash the password before saving
+//       actice: true, // Default status true
+//       role: "user", // Default role
+//       createdAt: new Date().toISOString(),
+//       updatedAt: new Date().toISOString(),
+//     };
 
-// PUT/PATCH: update a user
-app.patch("/users/:id", (req: Request, res: Response) => {
-  const userId = req.params.id;
-  const userIndex = users.findIndex((user) => user.id === userId);
+//     // update JSON file (json/data.json)
+//     DATA.users.push(newUser);
+//     await fs.writeFile("json/data.json", JSON.stringify(DATA, null, 2));
 
-  // Check if user exists
-  if (userIndex === -1) {
-    return res.status(404).json({
-      success: false,
-      message: "User not found",
-      data: {},
-    });
-  }
+//     // Respond with success
+//     res.status(201).json({
+//       success: true,
+//       message: "User created successfully",
+//       data: newUser,
+//     });
+//   } catch (error) {
+//     if (error instanceof Yup.ValidationError) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Validation error",
+//         errors: error.errors,
+//       });
+//     } else if (error instanceof Error) {
+//       return res.status(400).json({
+//         success: false,
+//         message: error.message,
+//         data: {},
+//       });
+//     }
+//     return res.status(500).json({
+//       success: false,
+//       message: "Internal server error",
+//       data: {},
+//     });
+//   }
+//   // users.push({
+//   //   id: crypto.randomUUID(),
+//   //   name: req.body.name,
+//   // });
 
-  // Update user
-  if (!req.body.name || req.body.name === "") {
-    return res.status(400).json({
-      success: false,
-      message: "Name is required to update user",
-      data: {},
-    });
-  }
+//   // res.status(201).json({
+//   //   success: true,
+//   //   message: "User created successfully",
+//   //   data: users[users.length - 1],
+//   // });
+// });
 
-  users[userIndex].name = req.body.name;
-  res.status(200).json({
-    success: true,
-    message: "User updated successfully",
-    data: users[userIndex],
-  });
-});
+// // PUT/PATCH: update a user
+// app.patch("/users/:id", (req: Request, res: Response) => {
+//   const userId = req.params.id;
+//   const userIndex = users.findIndex((user) => user.id === userId);
 
-// DELETE: delete a user
-app.delete("/users/:id", (req: Request, res: Response) => {
-  const userId = req.params.id;
-  const userIndex = users.findIndex((user) => user.id === userId);
+//   // Check if user exists
+//   if (userIndex === -1) {
+//     return res.status(404).json({
+//       success: false,
+//       message: "User not found",
+//       data: {},
+//     });
+//   }
 
-  // Check if user exists
-  if (userIndex === -1) {
-    return res.status(404).json({
-      success: false,
-      message: "User not found",
-      data: {},
-    });
-  }
+//   // Update user
+//   if (!req.body.name || req.body.name === "") {
+//     return res.status(400).json({
+//       success: false,
+//       message: "Name is required to update user",
+//       data: {},
+//     });
+//   }
 
-  // Remove user
-  users.splice(userIndex, 1);
-  res.status(200).json({
-    success: true,
-    message: "User deleted successfully",
-    data: {},
-  });
-});
+//   users[userIndex].name = req.body.name;
+//   res.status(200).json({
+//     success: true,
+//     message: "User updated successfully",
+//     data: users[userIndex],
+//   });
+// });
+
+// // DELETE: delete a user
+// app.delete("/users/:id", (req: Request, res: Response) => {
+//   const userId = req.params.id;
+//   const userIndex = users.findIndex((user) => user.id === userId);
+
+//   // Check if user exists
+//   if (userIndex === -1) {
+//     return res.status(404).json({
+//       success: false,
+//       message: "User not found",
+//       data: {},
+//     });
+//   }
+
+//   // Remove user
+//   users.splice(userIndex, 1);
+//   res.status(200).json({
+//     success: true,
+//     message: "User deleted successfully",
+//     data: {},
+//   });
+// });
 
 // running app
 app.listen(PORT);
