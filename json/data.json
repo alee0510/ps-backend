@@ -20,5 +20,147 @@
       "createdAt": "2025-08-07T04:35:00.558Z",
       "updatedAt": "2025-08-07T04:35:00.558Z"
     }
+  ],
+  "routes": [
+    {
+      "id": "1",
+      "departure_city": "Jakarta",
+      "destination_city": "Bandung",
+      "vehicle": "Bus",
+      "total_seat": 40,
+      "price": 150000,
+      "schedules": [
+        {
+          "departure_time": "2025-08-09T08:00:00+07:00",
+          "arrival_time": "2025-08-09T11:00:00+07:00"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "departure_city": "Surabaya",
+      "destination_city": "Bali",
+      "vehicle": "Ferry",
+      "total_seat": 200,
+      "price": 350000,
+      "schedules": [
+        {
+          "departure_time": "2025-08-10T06:00:00+07:00",
+          "arrival_time": "2025-08-10T14:00:00+07:00"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "departure_city": "Medan",
+      "destination_city": "Jakarta",
+      "vehicle": "Airplane",
+      "total_seat": 180,
+      "price": 1200000,
+      "schedules": [
+        {
+          "departure_time": "2025-08-11T09:30:00+07:00",
+          "arrival_time": "2025-08-11T12:15:00+07:00"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "departure_city": "Makassar",
+      "destination_city": "Manado",
+      "vehicle": "Ship",
+      "total_seat": 500,
+      "price": 800000,
+      "schedules": [
+        {
+          "departure_time": "2025-08-12T07:00:00+08:00",
+          "arrival_time": "2025-08-13T07:00:00+08:00"
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "departure_city": "Yogyakarta",
+      "destination_city": "Semarang",
+      "vehicle": "Train",
+      "total_seat": 300,
+      "price": 100000,
+      "schedules": [
+        {
+          "departure_time": "2025-08-13T09:00:00+07:00",
+          "arrival_time": "2025-08-13T11:30:00+07:00"
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "departure_city": "Padang",
+      "destination_city": "Pekanbaru",
+      "vehicle": "Bus",
+      "total_seat": 45,
+      "price": 250000,
+      "schedules": [
+        {
+          "departure_time": "2025-08-14T07:30:00+07:00",
+          "arrival_time": "2025-08-14T14:00:00+07:00"
+        }
+      ]
+    },
+    {
+      "id": "7",
+      "departure_city": "Banjarmasin",
+      "destination_city": "Samarinda",
+      "vehicle": "Ship",
+      "total_seat": 350,
+      "price": 500000,
+      "schedules": [
+        {
+          "departure_time": "2025-08-15T10:00:00+08:00",
+          "arrival_time": "2025-08-15T22:00:00+08:00"
+        }
+      ]
+    },
+    {
+      "id": "8",
+      "departure_city": "Pontianak",
+      "destination_city": "Kuching",
+      "vehicle": "Bus",
+      "total_seat": 30,
+      "price": 400000,
+      "schedules": [
+        {
+          "departure_time": "2025-08-16T08:00:00+07:00",
+          "arrival_time": "2025-08-16T12:00:00+07:00"
+        }
+      ]
+    },
+    {
+      "id": "9",
+      "departure_city": "Denpasar",
+      "destination_city": "Lombok",
+      "vehicle": "Ferry",
+      "total_seat": 250,
+      "price": 200000,
+      "schedules": [
+        {
+          "departure_time": "2025-08-17T06:30:00+08:00",
+          "arrival_time": "2025-08-17T09:30:00+08:00"
+        }
+      ]
+    },
+    {
+      "id": "10",
+      "departure_city": "Jakarta",
+      "destination_city": "Singapore",
+      "vehicle": "Airplane",
+      "total_seat": 160,
+      "price": 2500000,
+      "schedules": [
+        {
+          "departure_time": "2025-08-18T13:00:00+07:00",
+          "arrival_time": "2025-08-18T16:00:00+08:00"
+        }
+      ]
+    }
   ]
 }

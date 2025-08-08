@@ -2,9 +2,52 @@ import { Request, Response } from "express";
 import path from "path";
 import { promises as fs } from "fs";
 import crypto from "crypto";
-import { RegisterSchema, ValidationError } from "../utils/validation"; // Assuming you have a validation utility for Yup
+import { RegisterSchema, ValidationError } from "@/utils/validation";
 
 const UsersController = {
+  getUsers: async (req: Request, res: Response) => {
+    try {
+      const FILE_PATH = path.join(__dirname, "../../json/data.json");
+      const RAW_DATA = await fs.readFile(FILE_PATH, "utf-8");
+      const DATA = JSON.parse(RAW_DATA);
+
+      res.status(200).json({
+        success: true,
+        message: "Users retrieved successfully",
+        data: DATA.users,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  },
+  getUserById: async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.id;
+
+      // READ JSON file from (json/data.json)
+      const FILE_PATH = path.join(__dirname, "../../json/data.json");
+      const RAW_DATA = await fs.readFile(FILE_PATH, "utf-8");
+      const DATA = JSON.parse(RAW_DATA);
+
+      // Find user by ID
+      const user = DATA.users.find(
+        (user: { id: string }) => user.id === userId,
+      );
+
+      // Check if user exists
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "User retrieved successfully",
+        data: user,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  },
   createUser: async (req: Request, res: Response) => {
     try {
       // Validate request body -> Yup
@@ -12,7 +55,6 @@ const UsersController = {
 
       // Check data validation on current JSON file (email & name unique)
       const FILE_PATH = path.join(__dirname, "../../json/data.json");
-      console.log(FILE_PATH);
       const RAW_DATA = await fs.readFile(FILE_PATH, "utf-8");
       const DATA = JSON.parse(RAW_DATA);
 
@@ -66,6 +108,89 @@ const UsersController = {
         data: {},
       });
     }
+  },
+  updateUser: async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.id;
+
+      // READ JSON file from (json/data.json)
+      const FILE_PATH = path.join(__dirname, "../../json/data.json");
+      const RAW_DATA = await fs.readFile(FILE_PATH, "utf-8");
+      const DATA = JSON.parse(RAW_DATA);
+
+      // Find user by ID
+      const userIndex = DATA.users.findIndex(
+        (user: { id: string }) => user.id === userId,
+      );
+
+      // Check if user exists
+      if (userIndex === -1) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+          data: {},
+        });
+      }
+
+      // do input validation using Yup
+
+      // Update user data
+      const updatedUser = {
+        ...DATA.users[userIndex],
+        ...req.body, // Merge existing user data with new data
+        updatedAt: new Date().toISOString(), // Update timestamp
+      };
+
+      // Update the user in the array
+      DATA.users[userIndex] = updatedUser;
+
+      // Write updated data back to JSON file
+      await fs.writeFile(FILE_PATH, JSON.stringify(DATA, null, 2));
+
+      res.status(200).json({
+        success: true,
+        message: "User updated successfully",
+        data: updatedUser,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  },
+  deleteUser: async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.id;
+
+      // READ JSON file from (json/data.json)
+      const FILE_PATH = path.join(__dirname, "../../json/data.json");
+      const RAW_DATA = await fs.readFile(FILE_PATH, "utf-8");
+      const DATA = JSON.parse(RAW_DATA);
+
+      // Find user by ID
+      const userIndex = DATA.users.findIndex(
+        (user: { id: string }) => user.id === userId,
+      );
+
+      // Check if user exists
+      if (userIndex === -1) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+          data: {},
+        });
+      }
+
+      // Remove the user from the array
+      DATA.users.splice(userIndex, 1);
+
+      // Write updated data back to JSON file
+      await fs.writeFile(FILE_PATH, JSON.stringify(DATA, null, 2));
+
+      res.status(200).json({
+        success: true,
+        message: "User deleted successfully",
+        data: {},
+      });
+    } catch (error) {}
   },
 };
 
