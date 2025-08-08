@@ -6,6 +6,7 @@
     "build": "tsc && tsc-alias",
     "start": "node dist/server.js",
     "dev": "nodemon",
+    "preview": "tsc && tsc-alias && node dist/server.js",
     "lint": "eslint 'src/**/*.ts'"
   },
   "keywords": [],
