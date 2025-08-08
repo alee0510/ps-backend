@@ -1,6 +1,7 @@
 import exprress, { Request, Response, Application } from "express";
 import bodyParser from "body-parser";
 import logger from "@/middleware/logger";
+import errorMiddleware from "@/middleware/error-handler";
 
 // setup express
 const app: Application = exprress();
@@ -22,10 +23,15 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 // import user router
-import userRouter from "./routers/user";
+import userRouter from "@/routers/user";
+import travelRouter from "@/routers/travel-routes";
 
 // use user router
 app.use("/api", userRouter);
+app.use("/api", travelRouter);
+
+// setup error handler middleware
+app.use(errorMiddleware);
 
 // export app for server
 export default app;
