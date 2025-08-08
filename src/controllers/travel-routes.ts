@@ -1,7 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import path from "path";
-import { promises as fs } from "fs";
-import { ResponseHandler } from "@/utils";
+import { ResponseHandler, JSONHandler } from "@/utils";
 import { TravelRoute } from "@/types/travel-routes";
 
 // setup travel controller
@@ -9,9 +7,7 @@ const TravelController = {
   getTravelRoutes: async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Read the travel routes from the JSON file
-      const FILE_PATH = path.join(__dirname, "../../json/data.json");
-      const RAW_DATA = await fs.readFile(FILE_PATH, "utf-8");
-      const DATA = JSON.parse(RAW_DATA);
+      const DATA = await JSONHandler.read("../../json/data.json");
 
       // filer the routes based on the query parameters (from, to, depature date, and depature time)
       const { from, to, date, time } = req.query;

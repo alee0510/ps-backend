@@ -1,15 +1,16 @@
 import { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
-import path from "path";
-import { promises as fs } from "fs";
-import { CustomError, ResponseHandler, RegisterSchema } from "@/utils";
+import {
+  CustomError,
+  ResponseHandler,
+  RegisterSchema,
+  JSONHandler,
+} from "@/utils";
 
 const UsersController = {
   getUsers: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const FILE_PATH = path.join(__dirname, "../../json/data.json");
-      const RAW_DATA = await fs.readFile(FILE_PATH, "utf-8");
-      const DATA = JSON.parse(RAW_DATA);
+      const DATA = await JSONHandler.read("../../json/data.json");
 
       res
         .status(200)
@@ -25,9 +26,7 @@ const UsersController = {
       const userId = req.params.id;
 
       // READ JSON file from (json/data.json)
-      const FILE_PATH = path.join(__dirname, "../../json/data.json");
-      const RAW_DATA = await fs.readFile(FILE_PATH, "utf-8");
-      const DATA = JSON.parse(RAW_DATA);
+      const DATA = await JSONHandler.read("../../json/data.json");
 
       // Find user by ID
       const user = DATA.users.find(
@@ -52,9 +51,7 @@ const UsersController = {
       await RegisterSchema.validate(req.body, { abortEarly: false });
 
       // Check data validation on current JSON file (email & name unique)
-      const FILE_PATH = path.join(__dirname, "../../json/data.json");
-      const RAW_DATA = await fs.readFile(FILE_PATH, "utf-8");
-      const DATA = JSON.parse(RAW_DATA);
+      const DATA = await JSONHandler.read("../../json/data.json");
 
       // Check if email already exists
       const existingUser = DATA.users.find(
@@ -78,7 +75,7 @@ const UsersController = {
 
       // update JSON file (json/data.json)
       DATA.users.push(newUser);
-      await fs.writeFile("json/data.json", JSON.stringify(DATA, null, 2));
+      await JSONHandler.write("../../json/data.json", DATA);
 
       // Respond with success
       res
@@ -93,9 +90,7 @@ const UsersController = {
       const userId = req.params.id;
 
       // READ JSON file from (json/data.json)
-      const FILE_PATH = path.join(__dirname, "../../json/data.json");
-      const RAW_DATA = await fs.readFile(FILE_PATH, "utf-8");
-      const DATA = JSON.parse(RAW_DATA);
+      const DATA = await JSONHandler.read("../../json/data.json");
 
       // Find user by ID
       const userIndex = DATA.users.findIndex(
@@ -120,8 +115,9 @@ const UsersController = {
       DATA.users[userIndex] = updatedUser;
 
       // Write updated data back to JSON file
-      await fs.writeFile(FILE_PATH, JSON.stringify(DATA, null, 2));
+      await JSONHandler.write("../../json/data.json", DATA);
 
+      // Respond with success
       res
         .status(200)
         .json(
@@ -136,9 +132,7 @@ const UsersController = {
       const userId = req.params.id;
 
       // READ JSON file from (json/data.json)
-      const FILE_PATH = path.join(__dirname, "../../json/data.json");
-      const RAW_DATA = await fs.readFile(FILE_PATH, "utf-8");
-      const DATA = JSON.parse(RAW_DATA);
+      const DATA = await JSONHandler.read("../../json/data.json");
 
       // Find user by ID
       const userIndex = DATA.users.findIndex(
@@ -154,8 +148,9 @@ const UsersController = {
       DATA.users.splice(userIndex, 1);
 
       // Write updated data back to JSON file
-      await fs.writeFile(FILE_PATH, JSON.stringify(DATA, null, 2));
+      await JSONHandler.write("../../json/data.json", DATA);
 
+      // Respond with success
       res
         .status(200)
         .json(ResponseHandler.success("User deleted successfully", null));
