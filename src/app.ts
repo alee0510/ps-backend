@@ -1,7 +1,6 @@
 import exprress, { Request, Response, Application } from "express";
 import bodyParser from "body-parser";
-import logger from "@/middleware/logger";
-import errorMiddleware from "@/middleware/error-handler";
+import { errorMiddleware, requestLogger } from "@/middleware";
 
 // setup express
 const app: Application = exprress();
@@ -11,7 +10,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // setup middleware: LOGGING
-app.use(logger);
+app.use(requestLogger);
 
 // setup middleware: CORS (Cross-Origin Resource Sharing)
 

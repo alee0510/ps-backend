@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from "express";
+import crypto from "crypto";
 import path from "path";
 import { promises as fs } from "fs";
-import crypto from "crypto";
-import { RegisterSchema, ValidationError } from "@/utils/validation";
-import { CustomError } from "@/utils/custom-error";
+import { CustomError, ResponseHandler, RegisterSchema } from "@/utils";
 
 const UsersController = {
   getUsers: async (req: Request, res: Response, next: NextFunction) => {
@@ -12,11 +11,11 @@ const UsersController = {
       const RAW_DATA = await fs.readFile(FILE_PATH, "utf-8");
       const DATA = JSON.parse(RAW_DATA);
 
-      res.status(200).json({
-        success: true,
-        message: "Users retrieved successfully",
-        data: DATA.users,
-      });
+      res
+        .status(200)
+        .json(
+          ResponseHandler.success("Users retrieved successfully", DATA.users),
+        );
     } catch (error) {
       next(error);
     }
@@ -40,11 +39,9 @@ const UsersController = {
         throw new CustomError(404, "Not Found", "No user found with this ID");
       }
 
-      res.status(200).json({
-        success: true,
-        message: "User retrieved successfully",
-        data: user,
-      });
+      res
+        .status(200)
+        .json(ResponseHandler.success("User retrieved successfully", user));
     } catch (error) {
       next(error);
     }
@@ -84,11 +81,9 @@ const UsersController = {
       await fs.writeFile("json/data.json", JSON.stringify(DATA, null, 2));
 
       // Respond with success
-      res.status(201).json({
-        success: true,
-        message: "User created successfully",
-        data: newUser,
-      });
+      res
+        .status(201)
+        .json(ResponseHandler.success("User created successfully", newUser));
     } catch (error) {
       next(error);
     }
@@ -127,11 +122,11 @@ const UsersController = {
       // Write updated data back to JSON file
       await fs.writeFile(FILE_PATH, JSON.stringify(DATA, null, 2));
 
-      res.status(200).json({
-        success: true,
-        message: "User updated successfully",
-        data: updatedUser,
-      });
+      res
+        .status(200)
+        .json(
+          ResponseHandler.success("User updated successfully", updatedUser),
+        );
     } catch (error) {
       next(error);
     }
@@ -161,11 +156,9 @@ const UsersController = {
       // Write updated data back to JSON file
       await fs.writeFile(FILE_PATH, JSON.stringify(DATA, null, 2));
 
-      res.status(200).json({
-        success: true,
-        message: "User deleted successfully",
-        data: {},
-      });
+      res
+        .status(200)
+        .json(ResponseHandler.success("User deleted successfully", null));
     } catch (error) {
       next(error);
     }

@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import * as Yup from "yup";
-import { CustomError } from "@/utils/custom-error";
+import { CustomError, ResponseHandler, ValidationError } from "@/utils";
 
 // Error handler middleware
-const errorMiddleware = (
+export const errorMiddleware = (
   err: CustomError,
   req: Request,
   res: Response,
@@ -13,29 +12,24 @@ const errorMiddleware = (
   console.error("Error occurred:", err);
 
   // check if the error is a Yup validation error
-  if (err instanceof Yup.ValidationError) {
-    return res.status(400).json({
-      success: false,
-      message: "Validation error",
-      errors: err.errors,
-    });
+  if (err instanceof ValidationError) {
+    return res.status(400).json(ResponseHandler.error(err.message, err.errors));
   }
 
   // handle other types of errors
   if (err instanceof CustomError) {
-    return res.status(err.status).json({
-      success: false,
-      message: err.message,
-      error: err.error,
-    });
+    return res
+      .status(err.status)
+      .json(ResponseHandler.error(err.message, err.details));
   }
 
   // handle unexpected errors
-  return res.status(500).json({
-    success: false,
-    message: "Internal server error",
-    error: "An unexpected error occurred",
-  });
+  return res
+    .status(500)
+    .json(
+      ResponseHandler.error(
+        "Internal Server Error",
+        "An unexpected error occurred",
+      ),
+    );
 };
-
-export default errorMiddleware;

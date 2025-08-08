@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import { promises as fs } from "fs";
 import path from "path";
+import { promises as fs } from "fs";
+import { ResponseHandler } from "@/utils";
 import { TravelRoute } from "@/types/travel-routes";
 
 // setup travel controller
@@ -63,11 +64,14 @@ const TravelController = {
         );
       }
 
-      res.status(200).json({
-        success: true,
-        message: "Travel routes fetched successfully",
-        data: routes,
-      });
+      res
+        .status(200)
+        .json(
+          ResponseHandler.success(
+            "Travel routes retrieved successfully",
+            routes,
+          ),
+        );
     } catch (error) {
       next(error);
     }
