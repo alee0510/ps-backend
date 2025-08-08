@@ -2,15 +2,6 @@
   "watch": ["src"],
   "ext": "ts",
   "exec": "ts-node -r tsconfig-paths/register src/server.ts",
-  "ignore": [
-    "dist",
-    "node_modules",
-    "package.json",
-    "tsconfig.json",
-    "nodemon.json",
-    "tsconfig.build.json",
-    "tsconfig.paths.json",
-    "tsconfig.json"
-  ],
+  "ignore": ["dist", "node_modules", "package.json", "tsconfig.json"],
   "delay": 1000
 }
