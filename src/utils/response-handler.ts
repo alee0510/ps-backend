@@ -1,3 +1,11 @@
+export const SUCCESS_MESSAGE = Object.freeze({
+  RESOURCE_CREATED: "Resource created successfully",
+  RESOURCE_UPDATED: "Resource updated successfully",
+  RESOURCE_DELETED: "Resource deleted successfully",
+  OPERATION_SUCCESSFUL: "Operation completed successfully",
+  ACTION_COMPLETED: "Action completed successfully",
+});
+
 export class ResponseHandler {
   success: boolean;
   message: string;

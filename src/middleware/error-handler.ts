@@ -1,5 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import { CustomError, ResponseHandler, ValidationError } from "@/utils";
+import {
+  CustomError,
+  ResponseHandler,
+  ValidationError,
+  ERROR_MESSAGE,
+  ERROR_DETAILS,
+} from "@/utils";
 
 // Error handler middleware
 export const errorMiddleware = (
@@ -28,8 +34,9 @@ export const errorMiddleware = (
     .status(500)
     .json(
       ResponseHandler.error(
-        "Internal Server Error",
-        "An unexpected error occurred",
+        ERROR_MESSAGE.INTERNAL_SERVER_ERROR,
+        ERROR_DETAILS.INTERNAL_SERVER_ERROR + `: ${(err as Error).message}` ||
+          "Unknown error",
       ),
     );
 };
