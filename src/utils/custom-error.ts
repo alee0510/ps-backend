@@ -21,6 +21,17 @@ export const ERROR_DETAILS = Object.freeze({
   CONFLICT: "A conflict occurred with the current state of the resource",
 });
 
+export const ERROR_CODES = Object.freeze({
+  INTERNAL_SERVER_ERROR: 500,
+  VALIDATION_ERROR: 422,
+  NOT_FOUND: 404,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  BAD_REQUEST: 400,
+  SERVICE_UNAVAILABLE: 503,
+  CONFLICT: 409,
+});
+
 export class CustomError extends Error {
   status: number;
   details: string;

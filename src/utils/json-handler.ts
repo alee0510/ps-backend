@@ -1,8 +1,13 @@
 import path from "path";
 import { promises as fs } from "fs";
-import { CustomError } from "@/utils";
+import {
+  CustomError,
+  ERROR_MESSAGE,
+  ERROR_DETAILS,
+  ERROR_CODES,
+} from "@/utils";
 
-export const JSONHandler = {
+export const JSONHandler = Object.freeze({
   read: async (relativePath: string): Promise<any> => {
     try {
       const FILE_PATH = path.join(__dirname, relativePath);
@@ -11,9 +16,10 @@ export const JSONHandler = {
     } catch (error) {
       console.error(`Error reading JSON file at ${relativePath}:`, error);
       throw new CustomError(
-        500,
-        "Internal Server Error",
-        `Failed to read JSON file: ${relativePath}`,
+        ERROR_CODES.INTERNAL_SERVER_ERROR,
+        ERROR_MESSAGE.INTERNAL_SERVER_ERROR,
+        ERROR_DETAILS.INTERNAL_SERVER_ERROR +
+          `: cannot read path ${relativePath}`,
       );
     }
   },
@@ -24,10 +30,11 @@ export const JSONHandler = {
     } catch (error) {
       console.error(`Error writing JSON file at ${relativePath}:`, error);
       throw new CustomError(
-        500,
-        "Internal Server Error",
-        `Failed to write JSON file: ${relativePath}`,
+        ERROR_CODES.INTERNAL_SERVER_ERROR,
+        ERROR_MESSAGE.INTERNAL_SERVER_ERROR,
+        ERROR_DETAILS.INTERNAL_SERVER_ERROR +
+          `: cannot write to path ${relativePath}`,
       );
     }
   },
-};
+});

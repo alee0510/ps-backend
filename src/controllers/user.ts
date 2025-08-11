@@ -5,6 +5,11 @@ import {
   ResponseHandler,
   RegisterSchema,
   JSONHandler,
+  SUCCESS_CODES,
+  SUCCESS_MESSAGE,
+  ERROR_CODES,
+  ERROR_MESSAGE,
+  ERROR_DETAILS,
 } from "@/utils";
 
 const UsersController = {
@@ -13,9 +18,12 @@ const UsersController = {
       const DATA = await JSONHandler.read("../../json/data.json");
 
       res
-        .status(200)
+        .status(SUCCESS_CODES.OPERATION_SUCCESSFUL)
         .json(
-          ResponseHandler.success("Users retrieved successfully", DATA.users),
+          ResponseHandler.success(
+            SUCCESS_MESSAGE.OPERATION_SUCCESSFUL,
+            DATA.users,
+          ),
         );
     } catch (error) {
       next(error);
@@ -35,12 +43,18 @@ const UsersController = {
 
       // Check if user exists
       if (!user) {
-        throw new CustomError(404, "Not Found", "No user found with this ID");
+        throw new CustomError(
+          ERROR_CODES.NOT_FOUND,
+          ERROR_MESSAGE.NOT_FOUND,
+          ERROR_DETAILS.NOT_FOUND,
+        );
       }
 
       res
-        .status(200)
-        .json(ResponseHandler.success("User retrieved successfully", user));
+        .status(SUCCESS_CODES.OPERATION_SUCCESSFUL)
+        .json(
+          ResponseHandler.success(SUCCESS_MESSAGE.OPERATION_SUCCESSFUL, user),
+        );
     } catch (error) {
       next(error);
     }

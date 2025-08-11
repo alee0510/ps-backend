@@ -6,6 +6,14 @@ export const SUCCESS_MESSAGE = Object.freeze({
   ACTION_COMPLETED: "Action completed successfully",
 });
 
+export const SUCCESS_CODES = Object.freeze({
+  RESOURCE_CREATED: 201,
+  RESOURCE_UPDATED: 200,
+  RESOURCE_DELETED: 204,
+  OPERATION_SUCCESSFUL: 200,
+  ACTION_COMPLETED: 200,
+});
+
 export class ResponseHandler {
   success: boolean;
   message: string;
