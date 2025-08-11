@@ -72,7 +72,11 @@ const UsersController = {
         (user: { email: string }) => user.email === req.body.email,
       );
       if (existingUser) {
-        throw new CustomError(400, "Bad Request", "Email already exists");
+        throw new CustomError(
+          ERROR_CODES.BAD_REQUEST,
+          ERROR_MESSAGE.BAD_REQUEST,
+          ERROR_DETAILS.BAD_REQUEST,
+        );
       }
 
       // create new user -> provide UID, plain text password, set createdAt and updatedAt
@@ -93,8 +97,10 @@ const UsersController = {
 
       // Respond with success
       res
-        .status(201)
-        .json(ResponseHandler.success("User created successfully", newUser));
+        .status(SUCCESS_CODES.RESOURCE_CREATED)
+        .json(
+          ResponseHandler.success(SUCCESS_MESSAGE.RESOURCE_CREATED, newUser),
+        );
     } catch (error) {
       next(error);
     }
@@ -113,7 +119,11 @@ const UsersController = {
 
       // Check if user exists
       if (userIndex === -1) {
-        throw new CustomError(404, "Not Found", "No user found with this ID");
+        throw new CustomError(
+          ERROR_CODES.NOT_FOUND,
+          ERROR_MESSAGE.NOT_FOUND,
+          ERROR_DETAILS.NOT_FOUND,
+        );
       }
 
       // do input validation using Yup
@@ -133,9 +143,12 @@ const UsersController = {
 
       // Respond with success
       res
-        .status(200)
+        .status(SUCCESS_CODES.RESOURCE_UPDATED)
         .json(
-          ResponseHandler.success("User updated successfully", updatedUser),
+          ResponseHandler.success(
+            SUCCESS_MESSAGE.RESOURCE_UPDATED,
+            updatedUser,
+          ),
         );
     } catch (error) {
       next(error);
@@ -155,7 +168,11 @@ const UsersController = {
 
       // Check if user exists
       if (userIndex === -1) {
-        throw new CustomError(404, "Not Found", "No user found with this ID");
+        throw new CustomError(
+          ERROR_CODES.NOT_FOUND,
+          ERROR_MESSAGE.NOT_FOUND,
+          ERROR_DETAILS.NOT_FOUND,
+        );
       }
 
       // Remove the user from the array
@@ -166,8 +183,8 @@ const UsersController = {
 
       // Respond with success
       res
-        .status(200)
-        .json(ResponseHandler.success("User deleted successfully", null));
+        .status(SUCCESS_CODES.RESOURCE_DELETED)
+        .json(ResponseHandler.success(SUCCESS_MESSAGE.RESOURCE_DELETED, null));
     } catch (error) {
       next(error);
     }

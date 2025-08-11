@@ -1,5 +1,10 @@
 import { NextFunction, Request, Response } from "express";
-import { ResponseHandler, JSONHandler } from "@/utils";
+import {
+  ResponseHandler,
+  JSONHandler,
+  SUCCESS_CODES,
+  SUCCESS_MESSAGE,
+} from "@/utils";
 import { TravelRoute } from "@/types/travel-routes";
 
 // setup travel controller
@@ -61,12 +66,9 @@ const TravelController = {
       }
 
       res
-        .status(200)
+        .status(SUCCESS_CODES.OPERATION_SUCCESSFUL)
         .json(
-          ResponseHandler.success(
-            "Travel routes retrieved successfully",
-            routes,
-          ),
+          ResponseHandler.success(SUCCESS_MESSAGE.OPERATION_SUCCESSFUL, routes),
         );
     } catch (error) {
       next(error);
