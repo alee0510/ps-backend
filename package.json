@@ -17,11 +17,13 @@
     "body-parser": "^2.2.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "pg": "^8.16.3",
     "yup": "^1.7.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
     "@types/node": "^24.2.0",
+    "@types/pg": "^8.15.5",
     "eslint": "^9.32.0",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2",

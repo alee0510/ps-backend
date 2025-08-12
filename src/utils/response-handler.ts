@@ -19,6 +19,7 @@ export class ResponseHandler {
   message: string;
   data?: any | null;
   error?: string | string[] | null;
+  count?: number;
 
   constructor(
     success: boolean,
@@ -31,6 +32,7 @@ export class ResponseHandler {
     if (success) {
       if (data !== undefined) {
         this.data = data;
+        this.count = data.length || 1;
       }
     } else {
       if (error !== undefined) {
