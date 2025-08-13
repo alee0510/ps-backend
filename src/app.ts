@@ -26,8 +26,10 @@ import userRouter from "@/routers/user";
 import travelRouter from "@/routers/travel-routes";
 
 // use user router
-app.use("/api", userRouter);
-app.use("/api", travelRouter);
+const routers = [userRouter, travelRouter];
+routers.forEach((router) => {
+  app.use("/api", router);
+});
 
 // setup error handler middleware
 app.use(errorMiddleware);

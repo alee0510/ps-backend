@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import * as Yup from "yup";
 
 // config dotenv
 dotenv.config();
@@ -14,16 +15,31 @@ export interface Config {
   DB_PASSWORD: string;
 }
 
-// create config object
-const config: Config = {
-  PORT: parseInt(process.env.PORT || "2000", 10),
-  NODE_ENV: process.env.NODE_ENV || "development",
-  DB_HOST: process.env.DB_HOST || "localhost",
-  DB_PORT: parseInt(process.env.DB_PORT || "5432", 10),
-  DB_NAME: process.env.DB_NAME || "",
-  DB_USER: process.env.DB_USER || "",
-  DB_PASSWORD: process.env.DB_PASSWORD || "",
+// create schema for validation
+const schema = Yup.object().shape({
+  PORT: Yup.number().default(2000).required(),
+  NODE_ENV: Yup.string().default("development").required(),
+  DB_HOST: Yup.string().default("localhost").required(),
+  DB_PORT: Yup.number().default(5432).required(),
+  DB_NAME: Yup.string().required("DB_NAME is required"),
+  DB_USER: Yup.string().required("DB_USER is required"),
+  DB_PASSWORD: Yup.string().required("DB_PASSWORD is required"),
+});
+
+// validate config
+try {
+  schema.validateSync(process.env, { abortEarly: false });
+} catch (error) {
+  console.error("Invalid config:", (error as Yup.ValidationError).errors);
+  process.exit(1);
+}
+
+// load config
+const loadConfig = () => {
+  return schema.cast(process.env);
 };
 
 // export config
-export default config;
+export default Object.freeze<Config>({
+  ...loadConfig(),
+});
