@@ -1,8 +1,8 @@
-import { Router } from "express";
 import UsersController from "@/controllers/user";
+import { createRouter } from "@/utils";
 
 // create a new router instance
-const userRouter = Router();
+const userRouter = createRouter();
 
 // define routes
 userRouter.get("/users", UsersController.getUsers);
