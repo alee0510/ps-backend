@@ -14,23 +14,17 @@ const UsersController = {
   getUsers: async (req: Request, res: Response, next: NextFunction) => {
     try {
       // check query
-      const { page, limit } = req.query;
-      const offest =
-        (parseInt(page as string, 10) - 1) * parseInt(limit as string, 10) || 0;
+      // const { page, limit } = req.query;
+      // const offest =
+      //   (parseInt(page as string, 10) - 1) * parseInt(limit as string, 10) || 0;
 
       // do qeuery from database
-      const result = await database.query(
-        "SELECT * FROM customer LIMIT $1 OFFSET $2;",
-        [limit || 10, offest],
-      );
+      const result = await database.user.findMany();
 
       res
         .status(SUCCESS_CODES.OPERATION_SUCCESSFUL)
         .json(
-          ResponseHandler.success(
-            SUCCESS_MESSAGE.OPERATION_SUCCESSFUL,
-            result.rows
-          ),
+          ResponseHandler.success(SUCCESS_MESSAGE.OPERATION_SUCCESSFUL, result),
         );
     } catch (error) {
       next(error);
@@ -42,28 +36,25 @@ const UsersController = {
       const userId = req.params.id;
 
       // do query from database
-      const result = await database.query(
-        "SELECT * FROM customer WHERE customer_id = $1;",
-        [userId],
-      );
+      // const result = await database.query(
+      //   "SELECT * FROM customer WHERE customer_id = $1;",
+      //   [userId],
+      // );
 
       // Check if user exists
-      if (!result.rows.length) {
-        throw new CustomError(
-          ERROR_CODES.NOT_FOUND,
-          ERROR_MESSAGE.NOT_FOUND,
-          ERROR_DETAILS.NOT_FOUND,
-        );
-      }
+      // if (!result.rows.length) {
+      //   throw new CustomError(
+      //     ERROR_CODES.NOT_FOUND,
+      //     ERROR_MESSAGE.NOT_FOUND,
+      //     ERROR_DETAILS.NOT_FOUND,
+      //   );
+      // }
 
       // respond with success
       res
         .status(SUCCESS_CODES.OPERATION_SUCCESSFUL)
         .json(
-          ResponseHandler.success(
-            SUCCESS_MESSAGE.OPERATION_SUCCESSFUL,
-            result.rows[0]
-          ),
+          ResponseHandler.success(SUCCESS_MESSAGE.OPERATION_SUCCESSFUL, []),
         );
     } catch (error) {
       next(error);

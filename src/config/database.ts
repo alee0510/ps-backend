@@ -1,13 +1,5 @@
-import { Pool } from "pg";
-import Config from "./index";
+import { PrismaClient } from "@prisma/client";
 
-// create pool connection
-const database = new Pool({
-  host: Config.DB_HOST,
-  port: Config.DB_PORT,
-  database: Config.DB_NAME,
-  user: Config.DB_USER,
-  password: Config.DB_PASSWORD,
-});
+const database = new PrismaClient();
 
 export default database;
