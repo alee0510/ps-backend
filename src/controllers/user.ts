@@ -1,60 +1,146 @@
 import { Request, Response, NextFunction } from "express";
-import {
-  CustomError,
-  ResponseHandler,
-  SUCCESS_CODES,
-  SUCCESS_MESSAGE,
-  ERROR_CODES,
-  ERROR_MESSAGE,
-  ERROR_DETAILS,
-} from "@/utils";
+import crypto from "crypto";
+import * as Utils from "@/utils";
 import database from "@/config/database";
 
 const UsersController = {
   getUsers: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // check query
-      // const { page, limit } = req.query;
-      // const offest =
-      //   (parseInt(page as string, 10) - 1) * parseInt(limit as string, 10) || 0;
-
       // do qeuery from database
-      const result = await database.user.findMany();
+      const result = await database.user.findMany({
+        where: { active: true },
+      });
 
       res
-        .status(SUCCESS_CODES.OPERATION_SUCCESSFUL)
+        .status(Utils.SUCCESS_CODES.OPERATION_SUCCESSFUL)
         .json(
-          ResponseHandler.success(SUCCESS_MESSAGE.OPERATION_SUCCESSFUL, result),
+          Utils.ResponseHandler.success(
+            Utils.SUCCESS_MESSAGE.OPERATION_SUCCESSFUL,
+            result,
+          ),
         );
     } catch (error) {
       next(error);
     }
   },
-  getUserById: async (req: Request, res: Response, next: NextFunction) => {
+  createUser: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // get user id from params
-      const userId = req.params.id;
+      // validate request body
+      await Utils.RegisterSchema.validate(req.body, { abortEarly: false });
 
-      // do query from database
-      // const result = await database.query(
-      //   "SELECT * FROM customer WHERE customer_id = $1;",
-      //   [userId],
-      // );
+      // check if user already exists
+      const user = await database.user.findUnique({
+        where: { email: req.body.email },
+      });
+      if (user) {
+        throw new Utils.CustomError(
+          Utils.ERROR_CODES.BAD_REQUEST,
+          Utils.ERROR_MESSAGE.BAD_REQUEST,
+          Utils.ERROR_DETAILS.BAD_REQUEST + ": User already exists",
+        );
+      }
 
-      // Check if user exists
-      // if (!result.rows.length) {
-      //   throw new CustomError(
-      //     ERROR_CODES.NOT_FOUND,
-      //     ERROR_MESSAGE.NOT_FOUND,
-      //     ERROR_DETAILS.NOT_FOUND,
-      //   );
-      // }
+      // create new user
+      const newUser = await database.user.create({
+        data: {
+          uid: crypto.randomUUID(),
+          ...req.body,
+        },
+      });
 
-      // respond with success
       res
-        .status(SUCCESS_CODES.OPERATION_SUCCESSFUL)
+        .status(Utils.SUCCESS_CODES.RESOURCE_CREATED)
         .json(
-          ResponseHandler.success(SUCCESS_MESSAGE.OPERATION_SUCCESSFUL, []),
+          Utils.ResponseHandler.success(
+            Utils.SUCCESS_MESSAGE.RESOURCE_CREATED,
+            newUser,
+          ),
+        );
+    } catch (error) {
+      next(error);
+    }
+  },
+  updateUser: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // params & body
+      const { uid } = req.params;
+
+      // validate req.body { name?, email? }
+      const keys = Object.keys(req.body);
+      if (!keys.length) {
+        throw new Utils.CustomError(
+          Utils.ERROR_CODES.BAD_REQUEST,
+          Utils.ERROR_MESSAGE.BAD_REQUEST,
+          Utils.ERROR_DETAILS.BAD_REQUEST + ": No data to update",
+        );
+      }
+
+      // if data exist (req.body)
+      const valid = await Utils.UpdateUserSchema.validate(req.body, {
+        abortEarly: false,
+      });
+      console.log("is valid", valid);
+
+      // check if user exist
+      const user = await database.user.findUnique({
+        where: { uid, active: true },
+      });
+      if (!user) {
+        throw new Utils.CustomError(
+          Utils.ERROR_CODES.NOT_FOUND,
+          Utils.ERROR_MESSAGE.NOT_FOUND,
+          Utils.ERROR_DETAILS.NOT_FOUND +
+            ": User with uid: " +
+            uid +
+            " not found",
+        );
+      }
+
+      // update user
+      const updatedUser = await database.user.update({
+        where: { uid },
+        data: req.body,
+      });
+      res
+        .status(Utils.SUCCESS_CODES.RESOURCE_UPDATED)
+        .json(
+          Utils.ResponseHandler.success(
+            Utils.SUCCESS_MESSAGE.RESOURCE_UPDATED,
+            updatedUser,
+          ),
+        );
+    } catch (error) {
+      next(error);
+    }
+  },
+  deleteUser: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { uid } = req.params;
+
+      // check if user exist and status active
+      const user = await database.user.findUnique({
+        where: { uid, active: true },
+      });
+      if (!user) {
+        throw new Utils.CustomError(
+          Utils.ERROR_CODES.NOT_FOUND,
+          Utils.ERROR_MESSAGE.NOT_FOUND,
+          Utils.ERROR_DETAILS.NOT_FOUND,
+        );
+      }
+
+      // soft delete
+      await database.user.update({
+        where: { uid },
+        data: { active: false },
+      });
+      res
+        .status(Utils.SUCCESS_CODES.RESOURCE_DELETED)
+        .json(
+          Utils.ResponseHandler.success(
+            Utils.SUCCESS_MESSAGE.RESOURCE_DELETED,
+            null,
+          ),
         );
     } catch (error) {
       next(error);

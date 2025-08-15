@@ -5,6 +5,7 @@ import {
   ValidationError,
   ERROR_MESSAGE,
   ERROR_DETAILS,
+  ERROR_CODES,
 } from "@/utils";
 
 // Error handler middleware
@@ -19,7 +20,9 @@ export const errorMiddleware = (
 
   // check if the error is a Yup validation error
   if (err instanceof ValidationError) {
-    return res.status(400).json(ResponseHandler.error(err.message, err.errors));
+    return res
+      .status(ERROR_CODES.BAD_REQUEST)
+      .json(ResponseHandler.error(ERROR_MESSAGE.BAD_REQUEST, err.errors));
   }
 
   // handle other types of errors

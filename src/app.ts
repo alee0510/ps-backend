@@ -23,10 +23,10 @@ app.get("/", (req: Request, res: Response) => {
 
 // import user router
 import userRouter from "@/routers/user";
-import travelRouter from "@/routers/travel-routes";
+import articleRouter from "@/routers/article";
 
 // use user router
-const routers = [userRouter, travelRouter];
+const routers = [userRouter, articleRouter];
 routers.forEach((router) => {
   app.use("/api", router);
 });
