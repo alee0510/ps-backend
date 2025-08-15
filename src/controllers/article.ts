@@ -5,7 +5,13 @@ import database from "@/config/database";
 const ArticleController = {
   getArticles: async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const { page, limit } = req.query;
+      const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
+
+      // pagination and searching -> by title or author name
       const result = await database.article.findMany({
+        take: parseInt(limit as string) || 10,
+        skip: offset || 0,
         where: { published: true },
       });
 
