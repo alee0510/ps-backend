@@ -6,7 +6,6 @@ const userRouter = createRouter();
 
 // define routes
 userRouter.get("/users", UsersController.getUsers);
-userRouter.post("/users", UsersController.createUser);
 userRouter.patch("/users/:uid", UsersController.updateUser);
 userRouter.delete("/users/:uid", UsersController.deleteUser);
 

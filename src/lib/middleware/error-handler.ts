@@ -1,12 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import {
-  CustomError,
-  ResponseHandler,
-  ValidationError,
-  ERROR_MESSAGE,
-  ERROR_DETAILS,
-  ERROR_CODES,
-} from "@/lib/utils";
+import { CustomError, ResponseHandler, ValidationError } from "@/lib/utils";
+import { HttpRes } from "@/lib/constant/http-response";
 
 // Error handler middleware
 export const errorMiddleware = (
@@ -21,8 +15,8 @@ export const errorMiddleware = (
   // check if the error is a Yup validation error
   if (err instanceof ValidationError) {
     return res
-      .status(ERROR_CODES.BAD_REQUEST)
-      .json(ResponseHandler.error(ERROR_MESSAGE.BAD_REQUEST, err.errors));
+      .status(HttpRes.status.BAD_REQUEST)
+      .json(ResponseHandler.error(HttpRes.message.BAD_REQUEST, err.errors));
   }
 
   // handle other types of errors
@@ -37,8 +31,8 @@ export const errorMiddleware = (
     .status(500)
     .json(
       ResponseHandler.error(
-        ERROR_MESSAGE.INTERNAL_SERVER_ERROR,
-        ERROR_DETAILS.INTERNAL_SERVER_ERROR + `: ${(err as Error).message}` ||
+        HttpRes.message.INTERNAL_SERVER_ERROR,
+        HttpRes.details.INTERNAL_SERVER_ERROR + `: ${(err as Error).message}` ||
           "Unknown error",
       ),
     );

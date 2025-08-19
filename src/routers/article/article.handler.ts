@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import * as Utils from "@/lib/utils";
+import { ResponseHandler, CustomError, CreateArticleSchema } from "@/lib/utils";
+import { HttpRes } from "@/lib/constant/http-response";
 import database from "@/lib/prisma";
 
 const ArticleController = {
@@ -16,13 +17,8 @@ const ArticleController = {
       });
 
       res
-        .status(Utils.SUCCESS_CODES.OPERATION_SUCCESSFUL)
-        .json(
-          Utils.ResponseHandler.success(
-            Utils.SUCCESS_MESSAGE.OPERATION_SUCCESSFUL,
-            result,
-          ),
-        );
+        .status(HttpRes.status.OK)
+        .json(ResponseHandler.success(HttpRes.message.OK, result));
     } catch (error) {
       next(error);
     }
@@ -49,13 +45,8 @@ const ArticleController = {
       });
 
       res
-        .status(Utils.SUCCESS_CODES.OPERATION_SUCCESSFUL)
-        .json(
-          Utils.ResponseHandler.success(
-            Utils.SUCCESS_MESSAGE.OPERATION_SUCCESSFUL,
-            result,
-          ),
-        );
+        .status(HttpRes.status.OK)
+        .json(ResponseHandler.success(HttpRes.message.OK, result));
     } catch (error) {
       next(error);
     }
@@ -63,7 +54,7 @@ const ArticleController = {
   createArticle: async (req: Request, res: Response, next: NextFunction) => {
     try {
       // input validation
-      await Utils.CreateArticleSchema.validate(req.body, {
+      await CreateArticleSchema.validate(req.body, {
         abortEarly: false,
       });
 
@@ -72,10 +63,10 @@ const ArticleController = {
         where: { uid: req.body.authorId },
       });
       if (!author) {
-        throw new Utils.CustomError(
-          Utils.ERROR_CODES.NOT_FOUND,
-          Utils.ERROR_MESSAGE.NOT_FOUND,
-          Utils.ERROR_DETAILS.NOT_FOUND + ": Author not found",
+        throw new CustomError(
+          HttpRes.status.NOT_FOUND,
+          HttpRes.message.NOT_FOUND,
+          HttpRes.details.NOT_FOUND + ": Author not found",
         );
       }
 
@@ -85,13 +76,8 @@ const ArticleController = {
       });
 
       res
-        .status(Utils.SUCCESS_CODES.RESOURCE_CREATED)
-        .json(
-          Utils.ResponseHandler.success(
-            Utils.SUCCESS_MESSAGE.RESOURCE_CREATED,
-            newArticle,
-          ),
-        );
+        .status(HttpRes.status.CREATED)
+        .json(ResponseHandler.success(HttpRes.message.CREATED, newArticle));
     } catch (error) {
       next(error);
     }
@@ -104,10 +90,10 @@ const ArticleController = {
         where: { id, published: true },
       });
       if (!article) {
-        throw new Utils.CustomError(
-          Utils.ERROR_CODES.NOT_FOUND,
-          Utils.ERROR_MESSAGE.NOT_FOUND,
-          Utils.ERROR_DETAILS.NOT_FOUND + ": Article not found",
+        throw new CustomError(
+          HttpRes.status.NOT_FOUND,
+          HttpRes.message.NOT_FOUND,
+          HttpRes.details.NOT_FOUND + ": Article not found",
         );
       }
 
@@ -118,13 +104,8 @@ const ArticleController = {
       });
 
       res
-        .status(Utils.SUCCESS_CODES.RESOURCE_DELETED)
-        .json(
-          Utils.ResponseHandler.success(
-            Utils.SUCCESS_MESSAGE.RESOURCE_DELETED,
-            null,
-          ),
-        );
+        .status(HttpRes.status.NO_CONTENT)
+        .json(ResponseHandler.success(HttpRes.message.DELETED, null));
     } catch (error) {
       next(error);
     }

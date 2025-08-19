@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import crypto from "crypto";
-import * as Utils from "@/lib/utils";
+import { ResponseHandler, CustomError, UpdateUserSchema } from "@/lib/utils";
+import { HttpRes } from "@/lib/constant/http-response";
 import database from "@/lib/prisma";
 
 const UsersController = {
@@ -12,50 +12,8 @@ const UsersController = {
       });
 
       res
-        .status(Utils.SUCCESS_CODES.OPERATION_SUCCESSFUL)
-        .json(
-          Utils.ResponseHandler.success(
-            Utils.SUCCESS_MESSAGE.OPERATION_SUCCESSFUL,
-            result,
-          ),
-        );
-    } catch (error) {
-      next(error);
-    }
-  },
-  createUser: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      // validate request body
-      await Utils.RegisterSchema.validate(req.body, { abortEarly: false });
-
-      // check if user already exists
-      const user = await database.user.findUnique({
-        where: { email: req.body.email },
-      });
-      if (user) {
-        throw new Utils.CustomError(
-          Utils.ERROR_CODES.BAD_REQUEST,
-          Utils.ERROR_MESSAGE.BAD_REQUEST,
-          Utils.ERROR_DETAILS.BAD_REQUEST + ": User already exists",
-        );
-      }
-
-      // create new user
-      const newUser = await database.user.create({
-        data: {
-          uid: crypto.randomUUID(),
-          ...req.body,
-        },
-      });
-
-      res
-        .status(Utils.SUCCESS_CODES.RESOURCE_CREATED)
-        .json(
-          Utils.ResponseHandler.success(
-            Utils.SUCCESS_MESSAGE.RESOURCE_CREATED,
-            newUser,
-          ),
-        );
+        .status(HttpRes.status.OK)
+        .json(ResponseHandler.success(HttpRes.message.OK, result));
     } catch (error) {
       next(error);
     }
@@ -68,15 +26,15 @@ const UsersController = {
       // validate req.body { name?, email? }
       const keys = Object.keys(req.body);
       if (!keys.length) {
-        throw new Utils.CustomError(
-          Utils.ERROR_CODES.BAD_REQUEST,
-          Utils.ERROR_MESSAGE.BAD_REQUEST,
-          Utils.ERROR_DETAILS.BAD_REQUEST + ": No data to update",
+        throw new CustomError(
+          HttpRes.status.BAD_REQUEST,
+          HttpRes.message.BAD_REQUEST,
+          HttpRes.details.BAD_REQUEST + ": No data to update",
         );
       }
 
       // if data exist (req.body)
-      const valid = await Utils.UpdateUserSchema.validate(req.body, {
+      const valid = await UpdateUserSchema.validate(req.body, {
         abortEarly: false,
       });
       console.log("is valid", valid);
@@ -86,13 +44,10 @@ const UsersController = {
         where: { uid, active: true },
       });
       if (!user) {
-        throw new Utils.CustomError(
-          Utils.ERROR_CODES.NOT_FOUND,
-          Utils.ERROR_MESSAGE.NOT_FOUND,
-          Utils.ERROR_DETAILS.NOT_FOUND +
-            ": User with uid: " +
-            uid +
-            " not found",
+        throw new CustomError(
+          HttpRes.status.NOT_FOUND,
+          HttpRes.message.NOT_FOUND,
+          HttpRes.details.NOT_FOUND + ": User with uid: " + uid + " not found",
         );
       }
 
@@ -102,13 +57,8 @@ const UsersController = {
         data: req.body,
       });
       res
-        .status(Utils.SUCCESS_CODES.RESOURCE_UPDATED)
-        .json(
-          Utils.ResponseHandler.success(
-            Utils.SUCCESS_MESSAGE.RESOURCE_UPDATED,
-            updatedUser,
-          ),
-        );
+        .status(HttpRes.status.OK)
+        .json(ResponseHandler.success(HttpRes.message.UPDATED, updatedUser));
     } catch (error) {
       next(error);
     }
@@ -122,10 +72,10 @@ const UsersController = {
         where: { uid, active: true },
       });
       if (!user) {
-        throw new Utils.CustomError(
-          Utils.ERROR_CODES.NOT_FOUND,
-          Utils.ERROR_MESSAGE.NOT_FOUND,
-          Utils.ERROR_DETAILS.NOT_FOUND,
+        throw new CustomError(
+          HttpRes.status.NOT_FOUND,
+          HttpRes.message.NOT_FOUND,
+          HttpRes.details.NOT_FOUND,
         );
       }
 
@@ -135,13 +85,8 @@ const UsersController = {
         data: { active: false },
       });
       res
-        .status(Utils.SUCCESS_CODES.RESOURCE_DELETED)
-        .json(
-          Utils.ResponseHandler.success(
-            Utils.SUCCESS_MESSAGE.RESOURCE_DELETED,
-            null,
-          ),
-        );
+        .status(HttpRes.status.NO_CONTENT)
+        .json(ResponseHandler.success(HttpRes.message.DELETED, null));
     } catch (error) {
       next(error);
     }
