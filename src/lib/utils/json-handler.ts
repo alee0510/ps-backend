@@ -5,7 +5,7 @@ import {
   ERROR_MESSAGE,
   ERROR_DETAILS,
   ERROR_CODES,
-} from "@/utils";
+} from "@/lib/utils";
 
 export const JSONHandler = Object.freeze({
   read: async (relativePath: string): Promise<any> => {

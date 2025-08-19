@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
-import * as Utils from "@/utils";
-import database from "@/config/database";
+import * as Utils from "@/lib/utils";
+import database from "@/lib/prisma";
 
 const UsersController = {
   getUsers: async (req: Request, res: Response, next: NextFunction) => {

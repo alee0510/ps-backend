@@ -1,6 +1,6 @@
 import exprress, { Request, Response, Application } from "express";
 import bodyParser from "body-parser";
-import { errorMiddleware, requestLogger } from "@/middleware";
+import { errorMiddleware, requestLogger } from "@/lib/middleware";
 
 // setup express
 const app: Application = exprress();

@@ -6,7 +6,7 @@ import {
   ERROR_MESSAGE,
   ERROR_DETAILS,
   ERROR_CODES,
-} from "@/utils";
+} from "@/lib/utils";
 
 // Error handler middleware
 export const errorMiddleware = (

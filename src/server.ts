@@ -1,9 +1,9 @@
 import app from "@/app";
-import config from "@/config";
+import env from "@/env";
 
 // start the server
-app.listen(config.PORT, () => {
+app.listen(env.PORT, () => {
   console.log(
-    `Server is running at http://localhost:${config.PORT} in ${config.NODE_ENV} mode`,
+    `Server is running at http://localhost:${env.PORT} in ${env.NODE_ENV} mode`,
   );
 });

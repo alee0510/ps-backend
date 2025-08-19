@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import * as Utils from "@/utils";
-import database from "@/config/database";
+import * as Utils from "@/lib/utils";
+import database from "@/lib/prisma";
 
 const ArticleController = {
   getArticles: async (req: Request, res: Response, next: NextFunction) => {
