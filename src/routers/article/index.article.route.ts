@@ -1,5 +1,5 @@
-import ArticleController from "@/controllers/article";
 import { createRouter } from "@/lib/utils";
+import ArticleController from "./article.handler";
 
 // create a new router instance
 const articleRouter = createRouter();

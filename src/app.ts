@@ -22,8 +22,8 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 // import user router
-import userRouter from "@/routers/user";
-import articleRouter from "@/routers/article";
+import userRouter from "@/routers/user/index.user.route";
+import articleRouter from "@/routers/article/index.article.route";
 
 // use user router
 const routers = [userRouter, articleRouter];
