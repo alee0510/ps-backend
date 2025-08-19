@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { CustomError, ResponseHandler, ValidationError } from "@/lib/utils";
+import * as Yup from "yup";
+import { CustomError, ResponseHandler } from "@/lib/utils";
 import { HttpRes } from "@/lib/constant/http-response";
 
 // Error handler middleware
@@ -13,7 +14,7 @@ export const errorMiddleware = (
   console.error("Error occurred:", err);
 
   // check if the error is a Yup validation error
-  if (err instanceof ValidationError) {
+  if (err instanceof Yup.ValidationError) {
     return res
       .status(HttpRes.status.BAD_REQUEST)
       .json(ResponseHandler.error(HttpRes.message.BAD_REQUEST, err.errors));

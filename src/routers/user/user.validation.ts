@@ -1,6 +1,4 @@
 import * as Yup from "yup";
-
-export const ValidationError = Yup.ValidationError;
 export const RegisterSchema = Yup.object().shape({
   name: Yup.string().required("Name is required"),
   email: Yup.string()
@@ -13,9 +11,4 @@ export const RegisterSchema = Yup.object().shape({
 export const UpdateUserSchema = Yup.object().shape({
   name: Yup.string(),
   email: Yup.string().email("Invalid email format"),
-});
-export const CreateArticleSchema = Yup.object().shape({
-  title: Yup.string().required("Title is required"),
-  content: Yup.string().required("Content is required"),
-  authorId: Yup.string().required("Author is required"),
 });

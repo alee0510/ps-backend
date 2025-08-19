@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import { ResponseHandler, CustomError, UpdateUserSchema } from "@/lib/utils";
+import { ResponseHandler, CustomError } from "@/lib/utils";
 import { HttpRes } from "@/lib/constant/http-response";
 import database from "@/lib/prisma";
+import { UpdateUserSchema } from "./user.validation";
 
 const UsersController = {
   getUsers: async (req: Request, res: Response, next: NextFunction) => {

@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import { ResponseHandler, CustomError, CreateArticleSchema } from "@/lib/utils";
+import { ResponseHandler, CustomError } from "@/lib/utils";
 import { HttpRes } from "@/lib/constant/http-response";
 import database from "@/lib/prisma";
+import { CreateArticleSchema } from "./article.validation";
 
 const ArticleController = {
   getArticles: async (req: Request, res: Response, next: NextFunction) => {
