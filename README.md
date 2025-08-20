@@ -1,4 +1,4 @@
-# Express TypeScript Backend
+# Express TypeScript
 
 This is a comprehensive Express backend project written in TypeScript with authentication, database integration, and modular architecture. It provides CRUD operations for users and articles with proper error handling, validation, and middleware support.
 
@@ -584,5 +584,5 @@ JWT_SECRET="your-super-secret-jwt-key"
 
 ---
 
-**Author:** Purwadhika
+**Author:** alee0510
 **License:** ISC
