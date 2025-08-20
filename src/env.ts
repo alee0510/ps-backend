@@ -13,6 +13,7 @@ export interface Config {
   DB_NAME: string;
   DB_USER: string;
   DB_PASSWORD: string;
+  JWT_SECRET: string;
 }
 
 // create schema for validation
@@ -24,6 +25,7 @@ const schema = Yup.object().shape({
   DB_NAME: Yup.string().required("DB_NAME is required"),
   DB_USER: Yup.string().required("DB_USER is required"),
   DB_PASSWORD: Yup.string().required("DB_PASSWORD is required"),
+  JWT_SECRET: Yup.string().required("JWT_SECRET is required"),
 });
 
 // validate config

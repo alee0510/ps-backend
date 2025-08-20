@@ -7,6 +7,7 @@ import { CreateArticleSchema } from "./article.validation";
 const ArticleController = {
   getArticles: async (req: Request, res: Response, next: NextFunction) => {
     try {
+      console.log(req.body);
       const { page, limit } = req.query;
       const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
 
@@ -35,13 +36,6 @@ const ArticleController = {
           id: true,
           title: true,
           content: true,
-          authorId: true,
-          author: {
-            select: {
-              name: true,
-              email: true,
-            },
-          },
         },
       });
 

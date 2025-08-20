@@ -9,6 +9,7 @@ import {
 } from "@/lib/utils";
 import { HttpRes } from "@/lib/constant/http-response";
 import { RegisterSchema, LoginSchema } from "./auth.validation";
+import env from "@/env";
 const jwt = require("jsonwebtoken");
 
 export async function Register(
@@ -105,7 +106,7 @@ export async function Login(req: Request, res: Response, next: NextFunction) {
     }
 
     // generate session token
-    const token = jwt.sign({ uid: user.uid, role: user.role }, "secret-key");
+    const token = jwt.sign({ uid: user.uid, role: user.role }, env.JWT_SECRET);
 
     // return response
     res
