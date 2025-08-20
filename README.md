@@ -1,17 +1,22 @@
 # Express TypeScript Backend
 
-This is a simple Express backend project written in TypeScript. It provides basic CRUD operations for users and reads initial data from a JSON file.
+This is a comprehensive Express backend project written in TypeScript with authentication, database integration, and modular architecture. It provides CRUD operations for users and articles with proper error handling, validation, and middleware support.
 
 ## Requirements
 
 - Node.js (v18 or newer recommended)
 - npm (v9 or newer recommended)
+- PostgreSQL database
 
 ## Dependencies
 
 - express
 - body-parser
 - dotenv
+- prisma
+- yup (validation)
+- jsonwebtoken
+- crypto (password hashing)
 
 ## Dev Dependencies
 
@@ -27,12 +32,49 @@ This is a simple Express backend project written in TypeScript. It provides basi
 
 ```
 backend/
-├── json/
-│   └── data.json
+├── prisma/
+│   ├── migrations/
+│   ├── schema.prisma
+│   └── seed.ts
 ├── src/
+│   ├── lib/
+│   │   ├── constant/
+│   │   │   └── http-response.ts
+│   │   ├── middleware/
+│   │   │   ├── auth-handler.ts
+│   │   │   ├── error-handler.ts
+│   │   │   ├── request-logger.ts
+│   │   │   └── index.ts
+│   │   ├── utils/
+│   │   │   ├── create-handler.ts
+│   │   │   ├── create-router.ts
+│   │   │   ├── custom-error.ts
+│   │   │   ├── response-handler.ts
+│   │   │   ├── json-handler.ts
+│   │   │   ├── jwt.ts
+│   │   │   ├── pass-crypt.ts
+│   │   │   └── index.ts
+│   │   └── prisma.ts
+│   ├── routers/
+│   │   ├── article/
+│   │   │   ├── article.handler.ts
+│   │   │   ├── article.service.ts
+│   │   │   ├── article.validation.ts
+│   │   │   └── index.article.route.ts
+│   │   ├── auth/
+│   │   │   ├── auth.handler.ts
+│   │   │   ├── auth.validation.ts
+│   │   │   └── index.auth.route.ts
+│   │   └── user/
+│   │       ├── user.handler.ts
+│   │       ├── user.validation.ts
+│   │       └── index.user.route.ts
+│   ├── app.ts
+│   ├── env.ts
 │   └── server.ts
 ├── package.json
 ├── tsconfig.json
+└── .env
 ```
 
 ## Setup Instructions
@@ -86,68 +128,355 @@ npm run lint
 
 ## API Endpoints
 
+### Authentication Endpoints
+
+| Method | Endpoint             | Description                  | Auth Required |
+| ------ | -------------------- | ---------------------------- | ------------- |
+| POST   | `/api/auth/register` | Register a new user          | No            |
+| POST   | `/api/auth/login`    | Login user and get JWT token | No            |
+
+**Register Example:**
+
+```json
+POST /api/auth/register
+{
+  "username": "johndoe",
+  "email": "john@example.com",
+  "password": "SecurePass123!"
+}
+```
+
+**Login Example:**
+
+```json
+POST /api/auth/login
+{
+  "email": "john@example.com",
+  "password": "SecurePass123!"
+}
+```
+
+### User Endpoints
+
+| Method | Endpoint          | Description             | Auth Required |
+| ------ | ----------------- | ----------------------- | ------------- |
+| GET    | `/api/users`      | Get all active users    | No            |
+| PATCH  | `/api/users/:uid` | Update user by UID      | No            |
+| DELETE | `/api/users/:uid` | Soft delete user by UID | No            |
+
+### Article Endpoints
+
+| Method | Endpoint            | Description                | Auth Required |
+| ------ | ------------------- | -------------------------- | ------------- |
+| GET    | `/api/articles`     | Get all published articles | User          |
+| GET    | `/api/articles/:id` | Get article by ID          | User          |
+| POST   | `/api/articles`     | Create new article         | Admin         |
+| DELETE | `/api/articles/:id` | Soft delete article        | Admin         |
+
+**Create Article Example:**
+
+```json
+POST /api/articles
+Authorization: Bearer <jwt_token>
+{
+  "title": "My Article Title",
+  "content": "Article content here...",
+  "authorId": "user-uuid-here"
+}
+```
+
+### Response Format
+
+All API responses follow a consistent format:
+
+**Success Response:**
+
+```json
+{
+  "success": true,
+  "message": "Operation successful",
+  "data": {
+    /* response data */
+  }
+}
+```
+
+**Error Response:**
+
+```json
+{
+  "success": false,
+  "message": "Error message",
+  "details": "Detailed error information"
+}
+```
+
 ## Custom Utilities Documentation
+
+### Create Handler Utility
+
+The `createHandler` utility provides a standardized way to create Express route handlers with automatic error handling and access to common utilities. It wraps your handler function with try-catch logic and provides utility objects as parameters.
+
+**Location:** `src/lib/utils/create-handler.ts`
+
+**Usage Example:**
+
+```typescript
+import { createHandler } from "@/lib/utils";
+import { CreateArticleSchema } from "./article.validation";
+
+export const createArticle = createHandler(
+  async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
+    // Input validation
+    await CreateArticleSchema.validate(req.body, { abortEarly: false });
+
+    // Business logic
+    const newArticle = await ArticleService.create(req.body);
+
+    // Response
+    res
+      .status(HttpRes.status.CREATED)
+      .json(ResponseHandler.success(HttpRes.message.CREATED, newArticle));
+  },
+);
+```
+
+**Benefits:**
+
+- Automatic error handling with try-catch
+- Access to utility objects (CustomError, ResponseHandler, HttpRes)
+- Consistent error propagation to global error handler
+- Cleaner, more readable handler code
 
 ### Custom Response Handler
 
-Use the `ResponseHandler` class to standardize API responses. It ensures all responses have a consistent structure for both success and error cases. For consistency, use the provided constants: `SUCCESS_MESSAGE`, `ERROR_MESSAGE`, and `ERROR_DETAILS` from your utils.
+Use the `ResponseHandler` class to standardize API responses. It ensures all responses have a consistent structure for both success and error cases.
+
+**Location:** `src/lib/utils/response-handler.ts`
 
 **Success Example:**
 
 ```typescript
-import { ResponseHandler, SUCCESS_MESSAGE } from "@/utils/response-handler";
+import { ResponseHandler } from "@/lib/utils";
+import { HttpRes } from "@/lib/constant/http-response";
 
 // In a controller:
-res
-  .status(200)
-  .json(
-    ResponseHandler.success(SUCCESS_MESSAGE.OPERATION_SUCCESSFUL, {
-      foo: "bar",
-    }),
-  );
+res.status(HttpRes.status.OK).json(
+  ResponseHandler.success(HttpRes.message.OK, {
+    id: 1,
+    title: "Sample Article",
+  }),
+);
 ```
 
 **Error Example:**
 
 ```typescript
-import { ResponseHandler } from "@/utils/response-handler";
-import { ERROR_MESSAGE, ERROR_DETAILS } from "@/utils/custom-error";
+import { ResponseHandler } from "@/lib/utils";
+import { HttpRes } from "@/lib/constant/http-response";
 
-// In a controller or error handler:
+// In an error handler:
 res
-  .status(400)
+  .status(HttpRes.status.BAD_REQUEST)
   .json(
-    ResponseHandler.error(ERROR_MESSAGE.BAD_REQUEST, ERROR_DETAILS.BAD_REQUEST),
+    ResponseHandler.error(
+      HttpRes.message.BAD_REQUEST,
+      HttpRes.details.BAD_REQUEST,
+    ),
   );
 ```
 
-### Global Error Handler
+### Create Router Utility
 
-The global error handler middleware automatically formats errors using `ResponseHandler.error`. To use it, just throw or pass errors to `next(error)` in your controllers:
+The `createRouter` utility provides a simple wrapper around Express Router for consistent router creation.
+
+**Location:** `src/lib/utils/create-router.ts`
+
+**Usage Example:**
 
 ```typescript
-import { CustomError } from "@/utils/custom-error";
+import { createRouter } from "@/lib/utils";
+import { authUser, authAdmin } from "@/lib/middleware";
+import ArticleController from "./article.handler";
 
-// In a controller:
+const articleRouter = createRouter();
+
+articleRouter.get("/articles", authUser, ArticleController.getArticles);
+articleRouter.post("/articles", authAdmin, ArticleController.createArticle);
+
+export default articleRouter;
+```
+
+### Custom Error Utility
+
+The `CustomError` class provides a standardized way to create and throw custom errors with status codes and details.
+
+**Location:** `src/lib/utils/custom-error.ts`
+
+**Usage Example:**
+
+```typescript
+import { CustomError } from "@/lib/utils";
+import { HttpRes } from "@/lib/constant/http-response";
+
+// Throw a custom error
 if (!user) {
-   throw new CustomError(404, "Not Found", "User not found");
+  throw new CustomError(
+    HttpRes.status.NOT_FOUND,
+    HttpRes.message.NOT_FOUND,
+    "User not found",
+  );
 }
-// Or in a catch block:
-catch (error) {
-   next(error);
+
+// In a try-catch block
+try {
+  // Some operation
+} catch (error) {
+  next(error); // Pass to global error handler
 }
 ```
 
-The error handler will respond with a JSON error object.
+### JWT Utilities
+
+JWT utilities provide token generation and verification functionality.
+
+**Location:** `src/lib/utils/jwt.ts`
+
+**Usage Example:**
+
+```typescript
+import { generateToken, verifyToken } from "@/lib/utils";
+
+// Generate a token
+const token = generateToken({ uid: user.uid, role: user.role });
+
+// Verify a token
+try {
+  const payload = verifyToken(token);
+  console.log(payload); // { uid: "...", role: "..." }
+} catch (error) {
+  // Invalid token
+}
+```
+
+### Password Cryptography Utilities
+
+Password utilities provide secure password hashing and verification.
+
+**Location:** `src/lib/utils/pass-crypt.ts`
+
+**Usage Example:**
+
+```typescript
+import { generateSalt, hashPassword, verifyPassword } from "@/lib/utils";
+
+// Hash a password
+const salt = generateSalt();
+const hashedPassword = await hashPassword("userPassword", salt);
+
+// Verify a password
+const isValid = await verifyPassword("userPassword", salt, hashedPassword);
+console.log(isValid); // true or false
+```
+
+## Middleware Documentation
+
+### Authentication Middleware
+
+The authentication middleware provides JWT-based authentication and authorization for protected routes.
+
+**Location:** `src/lib/middleware/auth-handler.ts`
+
+**Available Middleware:**
+
+- `authUser`: Requires valid JWT token (any authenticated user)
+- `authAdmin`: Requires valid JWT token with admin role
+
+**Usage Example:**
+
+```typescript
+import { authUser, authAdmin } from "@/lib/middleware";
+import { createRouter } from "@/lib/utils";
+
+const router = createRouter();
+
+// Protected route - any authenticated user
+router.get("/profile", authUser, getUserProfile);
+
+// Admin-only route
+router.delete("/users/:id", authAdmin, deleteUser);
+```
+
+**Custom Request Type:**
+
+The middleware adds a `user` property to the request object:
+
+```typescript
+import { CustomRequest } from "@/lib/middleware";
+
+// In your handler (when using auth middleware)
+const handler = (req: Request, res: Response) => {
+  const user = (req as CustomRequest).user; // { uid: string, role: string }
+};
+```
+
+### Error Handler Middleware
+
+Global error handling middleware that catches and formats all errors consistently.
+
+**Location:** `src/lib/middleware/error-handler.ts`
+
+**Features:**
+
+- Handles `CustomError` instances
+- Handles Yup validation errors
+- Formats responses using `ResponseHandler`
+- Logs errors for debugging
+
+**Usage Example:**
+
+```typescript
+import { errorMiddleware } from "@/lib/middleware";
+import express from "express";
+
+const app = express();
+
+// Add routes here...
+
+// Error handler should be the last middleware
+app.use(errorMiddleware);
+```
+
+### Request Logger Middleware
+
+Logs incoming requests for debugging and monitoring purposes.
+
+**Location:** `src/lib/middleware/request-logger.ts`
+
+**Usage Example:**
+
+```typescript
+import { requestLogger } from "@/lib/middleware";
+import express from "express";
+
+const app = express();
+
+// Add request logging
+app.use(requestLogger);
+
+// Add other middleware and routes...
+```
 
 ### Custom JSON Handler
 
 Use the `JSONHandler` utility to read and write JSON files asynchronously. This is useful for working with data files in your project.
 
+**Location:** `src/lib/utils/json-handler.ts`
+
 **Read Example:**
 
 ```typescript
-import { JSONHandler } from "@/utils/json-handler";
+import { JSONHandler } from "@/lib/utils";
 
 const data = await JSONHandler.read("../../json/data.json");
 console.log(data);
@@ -156,25 +485,104 @@ console.log(data);
 **Write Example:**
 
 ```typescript
-import { JSONHandler } from "@/utils/json-handler";
+import { JSONHandler } from "@/lib/utils";
 
 await JSONHandler.write("../../json/data.json", { users: [] });
 ```
 
+## Architecture Overview
+
+### Layered Architecture
+
+The project follows a layered architecture pattern:
+
+1. **Routes Layer** (`src/routers/`): Defines API endpoints and applies middleware
+2. **Handler Layer** (`src/routers/*/handler.ts`): Processes requests and responses
+3. **Service Layer** (`src/routers/*/service.ts`): Contains business logic
+4. **Validation Layer** (`src/routers/*/validation.ts`): Input validation schemas
+5. **Database Layer** (`src/lib/prisma.ts`): Database access and queries
+
+### Key Design Patterns
+
+- **Handler Factory Pattern**: Using `createHandler` for consistent error handling
+- **Middleware Pattern**: Modular authentication and error handling
+- **Repository Pattern**: Database operations abstracted through Prisma
+- **Validation Pattern**: Centralized input validation using Yup schemas
+
+### Example Implementation Flow
+
+```typescript
+// 1. Route Definition
+router.post("/articles", authAdmin, ArticleController.createArticle);
+
+// 2. Handler with createHandler wrapper
+export const createArticle = createHandler(
+  async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
+    // 3. Validation
+    await CreateArticleSchema.validate(req.body);
+
+    // 4. Service call
+    const article = await ArticleService.create(req.body);
+
+    // 5. Response
+    res
+      .status(HttpRes.status.CREATED)
+      .json(ResponseHandler.success(HttpRes.message.CREATED, article));
+  },
+);
+```
+
+## Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```env
+# Server Configuration
+PORT=3000
+NODE_ENV=development
+
+# Database Configuration
+DATABASE_URL="postgresql://username:password@localhost:5432/database_name"
+
+# JWT Configuration
+JWT_SECRET="your-super-secret-jwt-key"
+```
+
+## Database Setup
+
+1. **Install Prisma CLI:**
+
+   ```sh
+   npm install -g prisma
+   ```
+
+2. **Generate Prisma Client:**
+
+   ```sh
+   npx prisma generate
+   ```
+
+3. **Run Database Migrations:**
+
+   ```sh
+   npx prisma migrate dev
+   ```
+
+4. **Seed Database (Optional):**
+   ```sh
+   npx prisma db seed
+   ```
+
 ## Notes
 
-- The server uses a JSON file for persistent user data.
-- Logging middleware is enabled for all requests.
-- You can customize the port using the `PORT` environment variable.
+- The server uses PostgreSQL database with Prisma ORM
+- JWT-based authentication with role-based authorization
+- Comprehensive error handling and logging
+- Input validation using Yup schemas
+- Modular architecture with separation of concerns
+- TypeScript for type safety and better development experience
 
 ---
 
-Author: purwadhika
-License: ISC
-
-- You can customize the port using the `PORT` environment variable.
-
----
-
-Author: purwadhika
-License: ISC
+**Author:** Purwadhika
+**License:** ISC
