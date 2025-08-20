@@ -101,5 +101,5 @@ npm run lint
 
 ---
 
-Author: purwadhika
+Author: alee0510
 License: ISC
