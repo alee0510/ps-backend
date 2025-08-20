@@ -169,12 +169,9 @@ await JSONHandler.write("../../json/data.json", { users: [] });
 
 ---
 
-Author: purwadhika
+Author: alee0510
 License: ISC
 
 - You can customize the port using the `PORT` environment variable.
 
 ---
-
-Author: purwadhika
-License: ISC
