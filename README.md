@@ -584,5 +584,5 @@ JWT_SECRET="your-super-secret-jwt-key"
 
 ---
 
-**Author:** alee0510
+**Author:** alee0510 |
 **License:** ISC
