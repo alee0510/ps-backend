@@ -1,7 +1,6 @@
 import { createHandler } from "@/lib/utils";
-import database from "@/lib/prisma";
 import { CreateArticleSchema } from "./article.validation";
-import ArticleServices from "./article.service";
+import * as ArticleServices from "./article.service";
 
 export const getArticles = createHandler(
   async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
@@ -38,22 +37,8 @@ export const createArticle = createHandler(
       abortEarly: false,
     });
 
-    // check if author exist
-    const author = await database.user.findUnique({
-      where: { uid: req.body.authorId },
-    });
-    if (!author) {
-      throw new CustomError(
-        HttpRes.status.NOT_FOUND,
-        HttpRes.message.NOT_FOUND,
-        HttpRes.details.NOT_FOUND + ": Author not found",
-      );
-    }
-
     // create article
-    const newArticle = await database.article.create({
-      data: req.body,
-    });
+    const newArticle = await ArticleServices.createArticle(req.body);
 
     res
       .status(HttpRes.status.CREATED)
@@ -65,9 +50,7 @@ export const deleteArticle = createHandler(
   async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
     const id = parseInt(req.params.id);
     // check if article exist
-    const article = await database.article.findUnique({
-      where: { id, published: true },
-    });
+    const article = await ArticleServices.getArticleById(id);
     if (!article) {
       throw new CustomError(
         HttpRes.status.NOT_FOUND,
@@ -77,10 +60,7 @@ export const deleteArticle = createHandler(
     }
 
     // soft delete article
-    await database.article.update({
-      where: { id },
-      data: { published: false },
-    });
+    await ArticleServices.deleteArticle(id);
 
     res
       .status(HttpRes.status.NO_CONTENT)

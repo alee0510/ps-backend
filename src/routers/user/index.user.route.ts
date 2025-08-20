@@ -1,6 +1,6 @@
 import { createRouter } from "@/lib/utils";
 import { authAdmin } from "@/lib/middleware";
-import UsersController from "./user.handler";
+import * as UsersController from "./user.handler";
 
 // create a new router instance
 const userRouter = createRouter();

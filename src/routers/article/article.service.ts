@@ -38,10 +38,3 @@ export async function deleteArticle(id: number) {
     data: { published: false },
   });
 }
-
-export default {
-  getArticles,
-  getArticleById,
-  createArticle,
-  deleteArticle,
-};

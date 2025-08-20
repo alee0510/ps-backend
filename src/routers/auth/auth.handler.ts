@@ -1,22 +1,15 @@
-import { Request, Response, NextFunction } from "express";
-import database from "@/lib/prisma";
 import {
-  ResponseHandler,
-  CustomError,
   hashPassword,
   generateSalt,
   verifyPassword,
+  generateToken,
+  createHandler,
 } from "@/lib/utils";
-import { HttpRes } from "@/lib/constant/http-response";
-import { generateToken } from "@/lib/utils";
 import { RegisterSchema, LoginSchema } from "./auth.validation";
+import * as AuthService from "./auth.service"; // eslint-disable-line
 
-export async function Register(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
-  try {
+export const Register = createHandler(
+  async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
     // validate request body
     const { username, email, password } = await RegisterSchema.validate(
       req.body,
@@ -24,9 +17,7 @@ export async function Register(
     );
 
     // check if user already exists
-    const user = await database.user.findFirst({
-      where: { email: req.body.email, username: req.body.username },
-    });
+    const user = await AuthService.searchUser({ email, username });
     if (user) {
       throw new CustomError(
         HttpRes.status.BAD_REQUEST,
@@ -40,52 +31,28 @@ export async function Register(
     const hashedPassworrd = await hashPassword(password, salt);
 
     // create new user into db
-    const newUser = await database.user.create({
-      data: {
-        username,
-        email,
-        salt,
-        password: hashedPassworrd,
-      },
-      select: {
-        uid: true,
-        username: true,
-        email: true,
-        role: true,
-        verified: true,
-        active: true,
-      },
+    const newUser = await AuthService.createUser({
+      username,
+      email,
+      salt,
+      password: hashedPassworrd,
     });
 
     res
       .status(HttpRes.status.CREATED)
       .json(ResponseHandler.success(HttpRes.message.CREATED, newUser));
-  } catch (error) {
-    next(error);
-  }
-}
+  },
+);
 
-export async function Login(req: Request, res: Response, next: NextFunction) {
-  try {
+export const Login = createHandler(
+  async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
     // do input validation
     const { password } = await LoginSchema.validate(req.body, {
       abortEarly: false,
     });
 
     // check if user exists
-    const user = await database.user.findFirst({
-      where: { email: req.body.email },
-      select: {
-        uid: true,
-        username: true,
-        email: true,
-        role: true,
-        verified: true,
-        active: true,
-        salt: true,
-        password: true,
-      },
-    });
+    const user = await AuthService.searchUser({ email: req.body.email });
     if (!user) {
       throw new CustomError(
         HttpRes.status.NOT_FOUND,
@@ -124,7 +91,5 @@ export async function Login(req: Request, res: Response, next: NextFunction) {
           active: user.active,
         }),
       );
-  } catch (error) {
-    next(error);
-  }
-}
+  },
+);

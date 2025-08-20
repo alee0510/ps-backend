@@ -1,97 +1,76 @@
-import { Request, Response, NextFunction } from "express";
-import { ResponseHandler, CustomError } from "@/lib/utils";
-import { HttpRes } from "@/lib/constant/http-response";
-import database from "@/lib/prisma";
+import { createHandler } from "@/lib/utils";
 import { UpdateUserSchema } from "./user.validation";
+import * as UserService from "./user.service";
 
-const UsersController = {
-  getUsers: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      // do qeuery from database
-      const result = await database.user.findMany({
-        where: { active: true },
-      });
+export const getUsers = createHandler(
+  async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
+    // do qeuery from database
+    const result = await UserService.getUsers();
 
-      res
-        .status(HttpRes.status.OK)
-        .json(ResponseHandler.success(HttpRes.message.OK, result));
-    } catch (error) {
-      next(error);
-    }
+    res
+      .status(HttpRes.status.OK)
+      .json(ResponseHandler.success(HttpRes.message.OK, result));
   },
-  updateUser: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      // params & body
-      const { uid } = req.params;
+);
 
-      // validate req.body { name?, email? }
-      const keys = Object.keys(req.body);
-      if (!keys.length) {
-        throw new CustomError(
-          HttpRes.status.BAD_REQUEST,
-          HttpRes.message.BAD_REQUEST,
-          HttpRes.details.BAD_REQUEST + ": No data to update",
-        );
-      }
+export const updateUser = createHandler(
+  async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
+    // params & body
+    const { uid } = req.params;
 
-      // if data exist (req.body)
-      const valid = await UpdateUserSchema.validate(req.body, {
-        abortEarly: false,
-      });
-      console.log("is valid", valid);
-
-      // check if user exist
-      const user = await database.user.findUnique({
-        where: { uid, active: true },
-      });
-      if (!user) {
-        throw new CustomError(
-          HttpRes.status.NOT_FOUND,
-          HttpRes.message.NOT_FOUND,
-          HttpRes.details.NOT_FOUND + ": User with uid: " + uid + " not found",
-        );
-      }
-
-      // update user
-      const updatedUser = await database.user.update({
-        where: { uid },
-        data: req.body,
-      });
-      res
-        .status(HttpRes.status.OK)
-        .json(ResponseHandler.success(HttpRes.message.UPDATED, updatedUser));
-    } catch (error) {
-      next(error);
+    // validate req.body { name?, email? }
+    const keys = Object.keys(req.body);
+    if (!keys.length) {
+      throw new CustomError(
+        HttpRes.status.BAD_REQUEST,
+        HttpRes.message.BAD_REQUEST,
+        HttpRes.details.BAD_REQUEST + ": No data to update",
+      );
     }
-  },
-  deleteUser: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { uid } = req.params;
 
-      // check if user exist and status active
-      const user = await database.user.findUnique({
-        where: { uid, active: true },
-      });
-      if (!user) {
-        throw new CustomError(
-          HttpRes.status.NOT_FOUND,
-          HttpRes.message.NOT_FOUND,
-          HttpRes.details.NOT_FOUND,
-        );
-      }
+    // if data exist (req.body)
+    const valid = await UpdateUserSchema.validate(req.body, {
+      abortEarly: false,
+    });
+    console.log("is valid", valid);
 
-      // soft delete
-      await database.user.update({
-        where: { uid },
-        data: { active: false },
-      });
-      res
-        .status(HttpRes.status.NO_CONTENT)
-        .json(ResponseHandler.success(HttpRes.message.DELETED, null));
-    } catch (error) {
-      next(error);
+    // check if user exist
+    const user = await UserService.getUserById(uid);
+    if (!user) {
+      throw new CustomError(
+        HttpRes.status.NOT_FOUND,
+        HttpRes.message.NOT_FOUND,
+        HttpRes.details.NOT_FOUND + ": User with uid: " + uid + " not found",
+      );
     }
-  },
-};
 
-export default UsersController;
+    // update user
+    const updatedUser = await UserService.updateUser(uid, req.body);
+    res
+      .status(HttpRes.status.OK)
+      .json(ResponseHandler.success(HttpRes.message.UPDATED, updatedUser));
+  },
+);
+
+export const deleteUser = createHandler(
+  async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
+    // params
+    const { uid } = req.params;
+
+    // check if user exist and status active
+    const user = await UserService.getUserById(uid);
+    if (!user) {
+      throw new CustomError(
+        HttpRes.status.NOT_FOUND,
+        HttpRes.message.NOT_FOUND,
+        HttpRes.details.NOT_FOUND,
+      );
+    }
+
+    // soft delete
+    await UserService.deleteUser(uid);
+    res
+      .status(HttpRes.status.NO_CONTENT)
+      .json(ResponseHandler.success(HttpRes.message.DELETED, null));
+  },
+);
