@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { CustomError } from "@/lib/utils";
+import { CustomError, verifyToken } from "@/lib/utils";
 import { HttpRes } from "@/lib/constant/http-response";
-import env from "@/env";
-const JWT = require("jsonwebtoken");
 
 // type
 export type CustomRequest = Request & { user: { uid: string; role: string } };
@@ -21,7 +19,7 @@ function AuthHandler({ userRole = "user" }: { userRole?: "admin" | "user" }) {
       }
 
       // check auth base on user role
-      const { uid, role } = JWT.verify(token, env.JWT_SECRET);
+      const { uid, role } = verifyToken(token);
       if (userRole === "admin" && role !== "admin") {
         throw new CustomError(
           HttpRes.status.FORBIDDEN,

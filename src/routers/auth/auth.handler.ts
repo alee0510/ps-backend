@@ -8,9 +8,8 @@ import {
   verifyPassword,
 } from "@/lib/utils";
 import { HttpRes } from "@/lib/constant/http-response";
+import { generateToken } from "@/lib/utils";
 import { RegisterSchema, LoginSchema } from "./auth.validation";
-import env from "@/env";
-const jwt = require("jsonwebtoken");
 
 export async function Register(
   req: Request,
@@ -106,7 +105,10 @@ export async function Login(req: Request, res: Response, next: NextFunction) {
     }
 
     // generate session token
-    const token = jwt.sign({ uid: user.uid, role: user.role }, env.JWT_SECRET);
+    const token = generateToken({
+      uid: user.uid,
+      role: user.role,
+    });
 
     // return response
     res
