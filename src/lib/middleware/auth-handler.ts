@@ -8,7 +8,7 @@ const JWT = require("jsonwebtoken");
 export type CustomRequest = Request & { user: { uid: string; role: string } };
 
 function AuthHandler({ userRole = "user" }: { userRole?: "admin" | "user" }) {
-  return async (req: CustomRequest, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
     try {
       // check if token exist
       const token = req.headers.authorization?.split(" ")[1]; // Bearer ${token}
@@ -30,8 +30,8 @@ function AuthHandler({ userRole = "user" }: { userRole?: "admin" | "user" }) {
         );
       }
 
-      // modified req object
-      req.user = { uid, role };
+      // modified req object - cast to CustomRequest to add user property
+      (req as CustomRequest).user = { uid, role };
 
       next();
     } catch (error) {

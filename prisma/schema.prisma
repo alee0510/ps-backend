@@ -15,7 +15,7 @@ model User {
   password  String
   salt      String
   verified  Boolean  @default(false)
-  active    Boolean  @default(false)
+  active    Boolean  @default(true)
   role      String   @default("user")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
