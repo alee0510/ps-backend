@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { Prisma } from "@prisma/client";
 import * as Yup from "yup";
 import { CustomError, ResponseHandler } from "@/lib/utils";
 import { HttpRes } from "@/lib/constant/http-response";
@@ -18,6 +19,13 @@ export const errorMiddleware = (
     return res
       .status(HttpRes.status.BAD_REQUEST)
       .json(ResponseHandler.error(HttpRes.message.BAD_REQUEST, err.errors));
+  }
+
+  // check if error is Prisma.PrismaClientKnownRequestError
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    return res
+      .status(HttpRes.status.BAD_REQUEST)
+      .json(ResponseHandler.error(HttpRes.message.BAD_REQUEST, err.message));
   }
 
   // handle other types of errors
