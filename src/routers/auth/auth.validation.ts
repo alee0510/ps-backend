@@ -14,9 +14,9 @@ export const RegisterSchema = Yup.object().shape({
     .required("Password is required"),
 });
 
-export const LoginSchema = Yup.object().shape({
-  email: Yup.string()
-    .email("Invalid email format")
-    .required("Email is required"),
-  password: Yup.string().required("Password is required"),
-});
+export const LoginSchema = RegisterSchema.omit(["username"]);
+
+export const SendVerificationEmailSchema = RegisterSchema.omit([
+  "username",
+  "password",
+]);

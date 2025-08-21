@@ -17,6 +17,18 @@ model User {
   verified  Boolean  @default(false)
   active    Boolean  @default(true)
   role      String   @default("user")
+  profileId Int?     @unique
+  profile   Profile?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Profile {
+  id        Int      @id @default(autoincrement())
+  userId    String   @unique
+  bio       String?
+  image     String?
+  user      User     @relation(fields: [userId], references: [uid])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

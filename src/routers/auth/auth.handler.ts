@@ -3,9 +3,16 @@ import {
   generateSalt,
   verifyPassword,
   generateToken,
+  verifyToken,
   createHandler,
+  transporter,
 } from "@/lib/utils";
-import { RegisterSchema, LoginSchema } from "./auth.validation";
+import { CustomRequest } from "@/lib/middleware";
+import {
+  RegisterSchema,
+  LoginSchema,
+  SendVerificationEmailSchema,
+} from "./auth.validation";
 import * as AuthService from "./auth.service"; // eslint-disable-line
 
 export const Register = createHandler(
@@ -91,5 +98,73 @@ export const Login = createHandler(
           active: user.active,
         }),
       );
+  },
+);
+
+export const SendVerificationEmail = createHandler(
+  async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
+    // input validation
+    const { email } = await SendVerificationEmailSchema.validate(req.body, {
+      abortEarly: false,
+    });
+
+    // generate verification token
+    const token = generateToken(
+      {
+        email,
+        uid: (req as CustomRequest).user.uid,
+      },
+      { expiresIn: "1m" },
+    );
+
+    // send email
+    transporter.sendMail({
+      from: "Admin <sender@gmail.com>",
+      to: email,
+      subject: "Test Drive from Express App",
+      template: "email/verify-email",
+      context: {
+        subject: "Verify your email",
+        appName: "TokoTok",
+        userName: "Ali",
+        verifyUrl: `http://localhost:2000/api/auth/verify-email?token=${token}`,
+        expiresIn: "24 hours",
+        supportEmail: "support@example.com",
+        year: new Date().getFullYear(),
+      },
+    });
+
+    res
+      .status(HttpRes.status.OK)
+      .json(ResponseHandler.success(HttpRes.message.NO_CONTENT, null));
+  },
+);
+
+export const VerifyEmail = createHandler(
+  async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
+    // get token from query params
+    const { token } = req.query;
+    if (!token) {
+      throw new CustomError(
+        HttpRes.status.BAD_REQUEST,
+        HttpRes.message.BAD_REQUEST,
+        HttpRes.details.BAD_REQUEST,
+      );
+    }
+
+    // verify token
+    const { uid } = verifyToken(token as string);
+    if (!uid) {
+      throw new CustomError(
+        HttpRes.status.BAD_REQUEST,
+        HttpRes.message.BAD_REQUEST,
+        HttpRes.details.BAD_REQUEST,
+      );
+    }
+
+    // update user verified status
+    await AuthService.updateUser(uid, { verified: true });
+
+    res.status(HttpRes.status.REDIRECT).redirect("http://localhost:2000");
   },
 );

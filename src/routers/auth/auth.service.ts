@@ -37,3 +37,10 @@ export async function createUser(data: {
     },
   });
 }
+
+export async function updateUser(uid: string, data: Record<string, any>) {
+  return await database.user.update({
+    where: { uid },
+    data,
+  });
+}

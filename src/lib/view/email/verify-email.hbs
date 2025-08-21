@@ -1,0 +1,51 @@
+<!-- This template is rendered inside layouts/main.handlebars via {{{body}}} -->
+
+<p style="margin:0 0 12px 0;">Hi
+  {{#if userName}}{{userName}}{{else}}there{{/if}},</p>
+<p style="margin:0 0 16px 0;">Thanks for signing up for
+  {{#if appName}}{{appName}}{{else}}our app{{/if}}. Please confirm your email
+  address by clicking the button below. This helps us keep your account secure.</p>
+
+<!-- Bulletproof button: includes VML for Outlook -->
+<table
+  role="presentation"
+  cellspacing="0"
+  cellpadding="0"
+  border="0"
+  align="center"
+  style="margin: 22px auto;"
+>
+  <tr>
+    <td align="center">
+      <a
+        class="btn btn-primary"
+        href="{{verifyUrl}}"
+        target="_blank"
+        style="display:inline-block;padding:12px 20px;border-radius:10px;background:#2563eb;color:#ffffff;text-decoration:none;font-weight:700;"
+      >
+        Verify Email
+      </a>
+      <!--<![endif]-->
+    </td>
+  </tr>
+</table>
+
+<p class="muted" style="margin: 16px 0 0 0; color:#64748b;">This link will
+  expire in
+  {{#if expiresIn}}{{expiresIn}}{{else}}24 hours{{/if}}. If the button doesn’t
+  work, copy and paste this URL into your browser:</p>
+<p style="word-break: break-all; font-size:13px; margin: 8px 0 0 0;">
+  <a
+    href="{{verifyUrl}}"
+    target="_blank"
+    style="color:#2563eb; text-decoration:underline;"
+  >{{verifyUrl}}</a>
+</p>
+
+{{#if additionalNote}}
+  <div
+    class="divider"
+    style="border-top: 1px solid #e2e8f0; margin: 24px 0;"
+  ></div>
+  <p class="muted" style="color:#64748b;">{{additionalNote}}</p>
+{{/if}}
