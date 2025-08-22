@@ -14,6 +14,7 @@ export type User = {
 // file upload type
 export type RequestWithFile = Request & {
   file: {
+    buffer: Buffer;
     fieldname: string;
     originalname: string;
     encoding: string;

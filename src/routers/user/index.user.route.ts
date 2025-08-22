@@ -1,5 +1,5 @@
 import { createRouter } from "@/lib/utils";
-import { authAdmin, authUser, upload } from "@/lib/middleware";
+import { authAdmin, authUser } from "@/lib/middleware";
 import * as UsersController from "./user.handler";
 
 // create a new router instance
@@ -13,7 +13,6 @@ userRouter.delete("/users/:uid", authAdmin, UsersController.deleteUser);
 userRouter.patch(
   "/users/:uid/profile/image",
   authUser,
-  upload.single("image"),
   UsersController.updateUserProfileImage,
 );
 

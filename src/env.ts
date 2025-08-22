@@ -12,6 +12,9 @@ export interface Config {
   JWT_SECRET: string;
   GMAIL_APP_PASSWORD: string;
   GMAIL_USER: string;
+  CLOUD_NAME: string;
+  CLOUD_API_KEY: string;
+  CLOUD_API_SECRET: string;
 }
 
 // create schema for validation
@@ -22,6 +25,9 @@ const schema = Yup.object().shape({
   JWT_SECRET: Yup.string().required("JWT_SECRET is required"),
   GMAIL_APP_PASSWORD: Yup.string().required("GMAIL_APP_PASSWORD is required"),
   GMAIL_USER: Yup.string().email().required("GMAIL_USER is required"),
+  CLOUD_NAME: Yup.string().required("CLOUD_NAME is required"),
+  CLOUD_API_KEY: Yup.string().required("CLOUD_API_KEY is required"),
+  CLOUD_API_SECRET: Yup.string().required("CLOUD_API_SECRET is required"),
 });
 
 // validate config
