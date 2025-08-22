@@ -17,6 +17,9 @@ This is a comprehensive Express backend project written in TypeScript with authe
 - yup (validation)
 - jsonwebtoken
 - crypto (password hashing)
+- cloudinary (image upload and management)
+- multer (file upload middleware)
+- mkdirp (directory creation)
 
 ## Dev Dependencies
 
@@ -44,6 +47,8 @@ backend/
 │   │   │   ├── auth-handler.ts
 │   │   │   ├── error-handler.ts
 │   │   │   ├── request-logger.ts
+│   │   │   ├── uploader.ts
+│   │   │   ├── runner.ts
 │   │   │   └── index.ts
 │   │   ├── utils/
 │   │   │   ├── create-handler.ts
@@ -54,6 +59,7 @@ backend/
 │   │   │   ├── jwt.ts
 │   │   │   ├── pass-crypt.ts
 │   │   │   └── index.ts
+│   │   ├── cloudinary.ts
 │   │   └── prisma.ts
 │   ├── routers/
 │   │   ├── article/
@@ -158,11 +164,36 @@ POST /api/auth/login
 
 ### User Endpoints
 
-| Method | Endpoint          | Description             | Auth Required |
-| ------ | ----------------- | ----------------------- | ------------- |
-| GET    | `/api/users`      | Get all active users    | No            |
-| PATCH  | `/api/users/:uid` | Update user by UID      | No            |
-| DELETE | `/api/users/:uid` | Soft delete user by UID | No            |
+| Method | Endpoint                        | Description               | Auth Required |
+| ------ | ------------------------------- | ------------------------- | ------------- |
+| GET    | `/api/users`                    | Get all active users      | Admin         |
+| GET    | `/api/users/:uid`               | Get user by UID           | User          |
+| PATCH  | `/api/users/:uid`               | Update user by UID        | Admin         |
+| DELETE | `/api/users/:uid`               | Soft delete user by UID   | Admin         |
+| PATCH  | `/api/users/:uid/profile/image` | Update user profile image | User          |
+
+**Update User Profile Image Example:**
+
+```bash
+# Using curl to upload an image file
+curl -X PATCH \
+  http://localhost:3000/api/users/user-uuid-here/profile/image \
+  -H "Authorization: Bearer <jwt_token>" \
+  -H "Content-Type: multipart/form-data" \
+  -F "image=@/path/to/your/image.jpg"
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Updated successfully",
+  "data": {
+    "image": "https://res.cloudinary.com/your-cloud/image/upload/v1234567890/images/abc123.jpg"
+  }
+}
+```
 
 ### Article Endpoints
 
@@ -467,6 +498,155 @@ app.use(requestLogger);
 // Add other middleware and routes...
 ```
 
+### File Upload Middleware
+
+The file upload middleware provides functionality for uploading files to local disk or cloud storage (Cloudinary). It uses Multer for handling multipart/form-data and provides two main upload strategies.
+
+**Location:** `src/lib/middleware/uploader.ts`
+
+**Available Upload Functions:**
+
+- `uploadToLocalDisk(fieldName, relativePath)`: Uploads files to local disk storage
+- `uploadToCloudinary(fieldName)`: Uploads files to Cloudinary cloud storage
+
+**Usage Example - Local Disk Upload:**
+
+```typescript
+import { uploadToLocalDisk } from "@/lib/middleware";
+import { createRouter } from "@/lib/utils";
+
+const router = createRouter();
+
+// Upload to local disk
+router.post("/upload", async (req, res) => {
+  const upload = uploadToLocalDisk("image", "../../../uploads");
+  await upload(req, res);
+
+  // File is now available at req.file
+  const file = req.file as DiskFile;
+  console.log(file.path); // Path to uploaded file
+});
+```
+
+**Usage Example - Cloudinary Upload:**
+
+```typescript
+import {
+  uploadToCloudinary,
+  type CustomRequestWithCloudinary,
+} from "@/lib/middleware";
+import { createHandler } from "@/lib/utils";
+
+export const uploadProfileImage = createHandler(
+  async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
+    // Upload to Cloudinary
+    const upload = uploadToCloudinary("image");
+    await upload(req, res);
+
+    // Access Cloudinary response
+    const cloudinaryData = (req as CustomRequestWithCloudinary).cloudinary;
+    console.log(cloudinaryData.secure_url); // Public URL of uploaded image
+    console.log(cloudinaryData.public_id); // Cloudinary public ID
+
+    res.status(HttpRes.status.OK).json(
+      ResponseHandler.success(HttpRes.message.UPDATED, {
+        imageUrl: cloudinaryData.secure_url,
+      }),
+    );
+  },
+);
+```
+
+**File Types and Interfaces:**
+
+```typescript
+// Base file interface
+type File = {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  size: number;
+};
+
+// Disk storage file (includes path information)
+type DiskFile = File & {
+  destination: string;
+  filename: string;
+  path: string;
+};
+
+// Memory storage file (includes buffer)
+type MemoryFile = File & {
+  buffer: Buffer;
+};
+
+// Request with file attached
+type CustomRequestWithFile<T extends MemoryFile | DiskFile> = Request & {
+  file: T;
+};
+
+// Request with Cloudinary response
+type CustomRequestWithCloudinary = Request & {
+  cloudinary: UploadApiResponse;
+};
+```
+
+**Features:**
+
+- **Local Disk Storage**: Automatically creates destination directories, generates unique filenames with timestamps
+- **Cloudinary Integration**: Converts files to base64 and uploads to Cloudinary with automatic folder organization
+- **Error Handling**: Throws CustomError when file upload fails or no file is provided
+- **Type Safety**: Provides TypeScript interfaces for different file types and request objects
+- **Middleware Runner**: Uses `runMiddleware` utility to promisify Multer middleware
+
+### Cloudinary Configuration
+
+The Cloudinary service provides cloud-based image and video management. The configuration is centralized in a single file that sets up the Cloudinary SDK with environment variables.
+
+**Location:** `src/lib/cloudinary.ts`
+
+**Configuration Example:**
+
+```typescript
+import cloudinary from "cloudinary";
+import env from "@/env";
+
+// Configure Cloudinary
+cloudinary.v2.config({
+  cloud_name: env.CLOUD_NAME,
+  api_key: env.CLOUD_API_KEY,
+  api_secret: env.CLOUD_API_SECRET,
+});
+
+export default cloudinary.v2;
+```
+
+**Usage in Upload Middleware:**
+
+The Cloudinary configuration is automatically used by the upload middleware. Files are uploaded to the "images" folder by default with the following settings:
+
+- **Folder**: `images/`
+- **Resource Type**: `image`
+- **Format**: Maintains original format or converts as needed
+- **Public ID**: Auto-generated unique identifier
+
+**Usage in Handlers:**
+
+```typescript
+import cloudinary from "@/lib/cloudinary";
+
+// Delete an image from Cloudinary
+await cloudinary.uploader.destroy(publicId);
+
+// Upload with custom options
+const result = await cloudinary.uploader.upload(dataURI, {
+  folder: "profile-images",
+  resource_type: "image",
+  transformation: [{ width: 300, height: 300, crop: "fill" }],
+});
+```
+
 ### Custom JSON Handler
 
 Use the `JSONHandler` utility to read and write JSON files asynchronously. This is useful for working with data files in your project.
@@ -546,7 +726,46 @@ DATABASE_URL="postgresql://username:password@localhost:5432/database_name"
 
 # JWT Configuration
 JWT_SECRET="your-super-secret-jwt-key"
+
+# Email Configuration (for notifications and password reset)
+GMAIL_USER="your-email@gmail.com"
+GMAIL_APP_PASSWORD="your-gmail-app-password"
+
+# Cloudinary Configuration (for image upload and management)
+CLOUD_NAME="your-cloudinary-cloud-name"
+CLOUD_API_KEY="your-cloudinary-api-key"
+CLOUD_API_SECRET="your-cloudinary-api-secret"
 ```
+
+### Environment Variables Description
+
+| Variable             | Description                               | Required                  | Example                                    |
+| -------------------- | ----------------------------------------- | ------------------------- | ------------------------------------------ |
+| `PORT`               | Server port number                        | No (default: 2000)        | `3000`                                     |
+| `NODE_ENV`           | Environment mode                          | No (default: development) | `production`                               |
+| `DATABASE_URL`       | PostgreSQL connection string              | Yes                       | `postgresql://user:pass@localhost:5432/db` |
+| `JWT_SECRET`         | Secret key for JWT token signing          | Yes                       | `your-super-secret-key-here`               |
+| `GMAIL_USER`         | Gmail address for sending emails          | Yes                       | `your-app@gmail.com`                       |
+| `GMAIL_APP_PASSWORD` | Gmail app password (not regular password) | Yes                       | `abcd efgh ijkl mnop`                      |
+| `CLOUD_NAME`         | Cloudinary cloud name                     | Yes                       | `your-cloud-name`                          |
+| `CLOUD_API_KEY`      | Cloudinary API key                        | Yes                       | `123456789012345`                          |
+| `CLOUD_API_SECRET`   | Cloudinary API secret                     | Yes                       | `your-api-secret-here`                     |
+
+### Setting up Gmail App Password
+
+1. Enable 2-Factor Authentication on your Gmail account
+2. Go to Google Account settings → Security → 2-Step Verification
+3. Generate an "App Password" for this application
+4. Use the generated 16-character password as `GMAIL_APP_PASSWORD`
+
+### Setting up Cloudinary
+
+1. Create a free account at [Cloudinary](https://cloudinary.com/)
+2. Go to your Dashboard to find your credentials:
+   - **Cloud Name**: Found in the dashboard URL and account details
+   - **API Key**: Found in the "Account Details" section
+   - **API Secret**: Found in the "Account Details" section (click "Reveal")
+3. Add these credentials to your `.env` file
 
 ## Database Setup
 
@@ -581,6 +800,9 @@ JWT_SECRET="your-super-secret-jwt-key"
 - Input validation using Yup schemas
 - Modular architecture with separation of concerns
 - TypeScript for type safety and better development experience
+- File upload support with both local disk and Cloudinary cloud storage
+- Email integration using Gmail SMTP for notifications
+- Image management with automatic cleanup and optimization via Cloudinary
 
 ---
 
