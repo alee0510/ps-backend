@@ -44,3 +44,11 @@ export async function updateUser(uid: string, data: Record<string, any>) {
     data,
   });
 }
+
+export async function createUserProfile(uid: string) {
+  return await database.profile.create({
+    data: {
+      userId: uid,
+    },
+  });
+}

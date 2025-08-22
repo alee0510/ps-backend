@@ -12,6 +12,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // setup middleware: LOGGING
 app.use(requestLogger);
 
+// expose public folder
+app.use("/public", exprress.static("public"));
+
 // setup middleware: CORS (Cross-Origin Resource Sharing)
 
 // define root routes

@@ -45,6 +45,11 @@ export const Register = createHandler(
       password: hashedPassworrd,
     });
 
+    // create user profile
+    await AuthService.createUserProfile(newUser.uid);
+
+    // send verification email
+
     res
       .status(HttpRes.status.CREATED)
       .json(ResponseHandler.success(HttpRes.message.CREATED, newUser));
