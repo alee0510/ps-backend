@@ -10,18 +10,3 @@ export type User = {
   createdAt: string;
   updatedAt: string;
 };
-
-// file upload type
-export type RequestWithFile = Request & {
-  file: {
-    buffer: Buffer;
-    fieldname: string;
-    originalname: string;
-    encoding: string;
-    mimetype: string;
-    destination: string;
-    filename: string;
-    path: string;
-    size: number;
-  };
-};
