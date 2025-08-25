@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { Prisma } from "@prisma/client";
 import * as Yup from "yup";
-import { CustomError, ResponseHandler } from "@/lib/utils";
+import { CustomError, ResponseHandler, Logger } from "@/lib/utils";
 import { HttpRes } from "@/lib/constant/http-response";
 
 // Error handler middleware
@@ -12,7 +12,7 @@ export const errorMiddleware = (
   next: NextFunction,
 ) => {
   // log the error (you can use a logging library here)
-  console.error("Error occurred:", err);
+  Logger.error("Error occurred:", err);
 
   // check if the error is a Yup validation error
   if (err instanceof Yup.ValidationError) {

@@ -18,6 +18,7 @@ export type File = {
   mimetype: string;
   size: number;
 };
+export type Mode = "single" | "array";
 export type DiskFile = File & {
   destination: string;
   filename: string;
@@ -26,15 +27,21 @@ export type DiskFile = File & {
 export type MemoryFile = File & {
   buffer: Buffer;
 };
-export type CustomRequestWithFile<T extends MemoryFile | DiskFile> = Request & {
-  file: T;
-};
-export type CustomRequestWithCloudinary = Request & {
-  cloudinary: UploadApiResponse;
-};
+export type CustomRequestWithFile<
+  M extends Mode = "single",
+  T extends DiskFile | MemoryFile = DiskFile,
+> = M extends "single" ? Request & { file: T } : Request & { files: T[] };
+export type CustomRequestWithCloudinary<M extends Mode = "single"> =
+  M extends "single"
+    ? Request & { cloudinary: UploadApiResponse }
+    : Request & { cloudinary: UploadApiResponse[] };
 
 // create middleware to upload image
-export function uploadToLocalDisk(fieldName: string, relativePath: string) {
+export function uploadToLocalDisk(
+  fieldName: string,
+  relativePath: string,
+  mode: Mode = "single",
+) {
   // create destination folder if not exist
   mkdirp.sync(path.join(__dirname, relativePath));
 
@@ -59,20 +66,20 @@ export function uploadToLocalDisk(fieldName: string, relativePath: string) {
   });
 
   // create multer middleware
-  const upload = multer({ storage: diskStorage }).single(fieldName);
+  const upload = multer({ storage: diskStorage })[mode](fieldName);
   return async function (req: Request, res: Response) {
     await runMiddleware(req, res, upload);
   };
 }
 
-export function uploadToCloudinary(fieldName: string) {
-  const upload = multer({ storage: multer.memoryStorage() }).single(fieldName);
+export function uploadToCloudinary(fieldName: string, mode: Mode = "single") {
+  const upload = multer({ storage: multer.memoryStorage() })[mode](fieldName);
   return async function (req: Request, res: Response) {
     // upload image to multer
     await runMiddleware(req, res, upload);
 
     // check if file is uploaded
-    if (!(req as CustomRequestWithFile<MemoryFile>).file) {
+    if (mode === "single" && !(req as CustomRequestWithFile).file) {
       throw new CustomError(
         HttpRes.status.BAD_REQUEST,
         HttpRes.message.BAD_REQUEST,
@@ -80,23 +87,39 @@ export function uploadToCloudinary(fieldName: string) {
       );
     }
 
-    // convert buffer to base64
-    const b64 = Buffer.from(
-      (req as CustomRequestWithFile<MemoryFile>).file.buffer,
-    ).toString("base64");
-    const dataURI =
-      "data:" +
-      (req as CustomRequestWithFile<MemoryFile>).file.mimetype +
-      ";base64," +
-      b64;
+    if (
+      mode === "array" &&
+      !(req as CustomRequestWithFile<"array", MemoryFile>).files.length
+    ) {
+      throw new CustomError(
+        HttpRes.status.BAD_REQUEST,
+        HttpRes.message.BAD_REQUEST,
+        HttpRes.details.BAD_REQUEST,
+      );
+    }
 
-    // upload image to cloudinary
-    const response = await cloudinary.uploader.upload(dataURI, {
-      folder: "images",
-      resource_type: "image",
-    });
+    // if mode is array
 
-    // modify req object to include .cloudinary
-    (req as CustomRequestWithCloudinary).cloudinary = response;
+    // if mode is single
+    if (mode === "single") {
+      // convert buffer to base64
+      const b64 = Buffer.from(
+        (req as CustomRequestWithFile<"single", MemoryFile>).file.buffer,
+      ).toString("base64");
+      const dataURI =
+        "data:" +
+        (req as CustomRequestWithFile<"single", MemoryFile>).file.mimetype +
+        ";base64," +
+        b64;
+
+      // upload image to cloudinary
+      const response = await cloudinary.uploader.upload(dataURI, {
+        folder: "images",
+        resource_type: "image",
+      });
+
+      // modify req object to include .cloudinary
+      (req as CustomRequestWithCloudinary<"single">).cloudinary = response;
+    }
   };
 }

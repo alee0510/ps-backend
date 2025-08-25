@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 
+// Promise-ify
 export function runMiddleware(
   req: Request,
   res: Response,

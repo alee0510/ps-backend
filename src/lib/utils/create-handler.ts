@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { CustomError, ResponseHandler } from "@/lib/utils";
+import { CustomError, ResponseHandler, Logger } from "@/lib/utils";
 import { HttpRes } from "@/lib/constant/http-response";
 
 export function createHandler(
@@ -11,6 +11,7 @@ export function createHandler(
       CustomError: typeof CustomError;
       ResponseHandler: typeof ResponseHandler;
       HttpRes: typeof HttpRes;
+      Logger: typeof Logger;
     },
   ) => void,
 ) {
@@ -20,6 +21,7 @@ export function createHandler(
         CustomError,
         ResponseHandler,
         HttpRes,
+        Logger,
       });
     } catch (error) {
       next(error);

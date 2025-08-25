@@ -28,9 +28,10 @@ app.get("/", (req: Request, res: Response) => {
 import userRouter from "@/routers/user/index.user.route";
 import articleRouter from "@/routers/article/index.article.route";
 import authRouter from "@/routers/auth/index.auth.route";
+import taskRouter from "@/routers/task/index.task.route";
 
 // use user router
-const routers = [userRouter, articleRouter, authRouter];
+const routers = [userRouter, articleRouter, authRouter, taskRouter];
 routers.forEach((router) => {
   app.use("/api", router);
 });

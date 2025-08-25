@@ -25,6 +25,36 @@ export async function main() {
       },
     ],
   });
+
+  await database.task.createMany({
+    data: [
+      {
+        id: 1,
+        title: "Learn Express.js",
+        completed: false,
+      },
+      {
+        id: 2,
+        title: "Implement Winston logging",
+        completed: true,
+      },
+      {
+        id: 3,
+        title: "Write Playwright tests",
+        completed: false,
+      },
+      {
+        id: 4,
+        title: "Deploy to production",
+        completed: true,
+      },
+      {
+        id: 5,
+        title: "Refactor API routes",
+        completed: false,
+      },
+    ],
+  });
 }
 
 // run

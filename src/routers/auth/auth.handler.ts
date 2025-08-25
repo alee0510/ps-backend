@@ -57,7 +57,7 @@ export const Register = createHandler(
 );
 
 export const Login = createHandler(
-  async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
+  async (req, res, next, { CustomError, ResponseHandler, HttpRes, Logger }) => {
     // do input validation
     const { password } = await LoginSchema.validate(req.body, {
       abortEarly: false,
@@ -72,6 +72,7 @@ export const Login = createHandler(
         HttpRes.details.NOT_FOUND + ": User not found",
       );
     }
+    Logger.info("User found", user);
 
     // do authentication
     const isValid = await verifyPassword(password, user.salt, user.password);
