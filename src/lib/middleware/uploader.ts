@@ -2,7 +2,7 @@ import path from "path";
 import type { Request, Response } from "express";
 import type { UploadApiResponse } from "cloudinary";
 import cloudinary from "@/lib/cloudinary";
-import { CustomError } from "@/lib/utils";
+import { CustomError, fromBufferToDataURI } from "@/lib/utils";
 import { HttpRes } from "@/lib/constant/http-response";
 import { runMiddleware } from "./runner";
 
@@ -79,17 +79,10 @@ export function uploadToCloudinary(fieldName: string, mode: Mode = "single") {
     await runMiddleware(req, res, upload);
 
     // check if file is uploaded
-    if (mode === "single" && !(req as CustomRequestWithFile).file) {
-      throw new CustomError(
-        HttpRes.status.BAD_REQUEST,
-        HttpRes.message.BAD_REQUEST,
-        HttpRes.details.BAD_REQUEST,
-      );
-    }
-
     if (
-      mode === "array" &&
-      !(req as CustomRequestWithFile<"array", MemoryFile>).files.length
+      (mode === "single" && !(req as CustomRequestWithFile).file) ||
+      (mode === "array" &&
+        !(req as CustomRequestWithFile<"array", MemoryFile>).files.length)
     ) {
       throw new CustomError(
         HttpRes.status.BAD_REQUEST,
@@ -99,18 +92,27 @@ export function uploadToCloudinary(fieldName: string, mode: Mode = "single") {
     }
 
     // if mode is array
+    if (mode === "array") {
+      const files = (req as CustomRequestWithFile<"array", MemoryFile>).files;
+      const dataURIs = files.map((file) => {
+        return fromBufferToDataURI(file.buffer, file.mimetype);
+      });
+      const responses = await Promise.all(
+        dataURIs.map((dataURI) => {
+          return cloudinary.uploader.upload(dataURI, {
+            folder: "images",
+            resource_type: "image",
+          });
+        }),
+      );
+      (req as CustomRequestWithCloudinary<"array">).cloudinary = responses;
+    }
 
     // if mode is single
     if (mode === "single") {
       // convert buffer to base64
-      const b64 = Buffer.from(
-        (req as CustomRequestWithFile<"single", MemoryFile>).file.buffer,
-      ).toString("base64");
-      const dataURI =
-        "data:" +
-        (req as CustomRequestWithFile<"single", MemoryFile>).file.mimetype +
-        ";base64," +
-        b64;
+      const file = (req as CustomRequestWithFile<"single", MemoryFile>).file;
+      const dataURI = fromBufferToDataURI(file.buffer, file.mimetype);
 
       // upload image to cloudinary
       const response = await cloudinary.uploader.upload(dataURI, {
@@ -119,7 +121,7 @@ export function uploadToCloudinary(fieldName: string, mode: Mode = "single") {
       });
 
       // modify req object to include .cloudinary
-      (req as CustomRequestWithCloudinary<"single">).cloudinary = response;
+      (req as CustomRequestWithCloudinary).cloudinary = response;
     }
   };
 }

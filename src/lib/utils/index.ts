@@ -1,6 +1,7 @@
 export * from "./custom-error";
 export * from "./create-router";
 export * from "./create-handler";
+export * from "./dataURI";
 export * from "./email-transporter";
 export * from "./file-system";
 export * from "./json-handler";
