@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import {
   hashPassword,
   generateSalt,
@@ -14,6 +15,7 @@ import {
   SendVerificationEmailSchema,
 } from "./auth.validation";
 import * as AuthService from "./auth.service"; // eslint-disable-line
+import redis from "@/lib/redis";
 
 export const Register = createHandler(
   async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
@@ -72,7 +74,6 @@ export const Login = createHandler(
         HttpRes.details.NOT_FOUND + ": User not found",
       );
     }
-    Logger.info("User found", user);
 
     // do authentication
     const isValid = await verifyPassword(password, user.salt, user.password);
@@ -84,15 +85,21 @@ export const Login = createHandler(
       );
     }
 
-    // generate session token
-    const token = generateToken({
-      uid: user.uid,
-      role: user.role,
-    });
+    // do session management -> { key : value } -> { sessionId : { userId, role }}
+    const sessionId = crypto.randomBytes(512).toString("hex").normalize();
+    Logger.info(sessionId, { sessionId: { uid: user.uid, role: user.role } });
+
+    // save session id to db (REDIS)
+    await redis.set(
+      sessionId,
+      JSON.stringify({ uid: user.uid, role: user.role }),
+      "EX",
+      60 * 60 * 24, // seconds
+    );
 
     // return response
     res
-      .header("Authorization", `Bearer ${token}`)
+      .header("Authorization", `Bearer ${sessionId}`)
       .status(HttpRes.status.OK)
       .json(
         ResponseHandler.success(HttpRes.message.OK, {

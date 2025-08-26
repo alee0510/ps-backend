@@ -1,15 +1,29 @@
 import { createHandler } from "@/lib/utils";
+import redis from "@/lib/redis";
 import { CreateArticleSchema } from "./article.validation";
 import * as ArticleServices from "./article.service";
+
+const key = "articles";
 
 export const getArticles = createHandler(
   async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
     const query = req.query;
 
+    // check cache first
+    const cache = await redis.get(key);
+    if (cache) {
+      return res
+        .status(HttpRes.status.OK)
+        .json(ResponseHandler.success(HttpRes.message.OK, JSON.parse(cache)));
+    }
+
     // pagination and searching -> by title or author name
     const result = await ArticleServices.getArticles(
       query as { page: string; limit: string },
     );
+
+    // set cache
+    await redis.set(key, JSON.stringify(result));
 
     res
       .status(HttpRes.status.OK)

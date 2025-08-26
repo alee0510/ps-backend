@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { CustomError, verifyToken } from "@/lib/utils";
 import { HttpRes } from "@/lib/constant/http-response";
+import redis from "@/lib/redis";
 
 // type
 export type CustomRequest = Request & { user: { uid: string; role: string } };
@@ -19,7 +20,16 @@ function AuthHandler({ userRole = "user" }: { userRole?: "admin" | "user" }) {
       }
 
       // check auth base on user role
-      const { uid, role } = verifyToken(token);
+      const session = await redis.get(token);
+      if (!session) {
+        throw new CustomError(
+          HttpRes.status.UNAUTHORIZED,
+          HttpRes.message.UNAUTHORIZED,
+          HttpRes.details.UNAUTHORIZED,
+        );
+      }
+      
+      const { uid, role } = JSON.parse(session as string);
       if (userRole === "admin" && role !== "admin") {
         throw new CustomError(
           HttpRes.status.FORBIDDEN,
