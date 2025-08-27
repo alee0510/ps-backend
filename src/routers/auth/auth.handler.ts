@@ -16,6 +16,7 @@ import {
 } from "./auth.validation";
 import * as AuthService from "./auth.service"; // eslint-disable-line
 import redis from "@/lib/redis";
+import { Http } from "winston/lib/winston/transports";
 
 export const Register = createHandler(
   async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
@@ -179,5 +180,51 @@ export const VerifyEmail = createHandler(
     await AuthService.updateUser(uid, { verified: true });
 
     res.status(HttpRes.status.REDIRECT).redirect("http://localhost:2000");
+  },
+);
+
+export const RefreshToken = createHandler(
+  async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
+    const { role, uid } = (req as CustomRequest).user;
+    const token = req.headers.authorization?.split(" ")[1];
+
+    // validate token
+    if (!token) {
+      throw new CustomError(
+        HttpRes.status.UNAUTHORIZED,
+        HttpRes.message.UNAUTHORIZED,
+        HttpRes.details.UNAUTHORIZED,
+      );
+    }
+
+    // check if token exist in redis
+    const session = await redis.get(token as string);
+    if (!session) {
+      return res.status(HttpRes.status.REDIRECT).json(
+        ResponseHandler.success(HttpRes.message.UNAUTHORIZED, {
+          redirectUrl: "/auth/login",
+        }),
+      );
+    }
+
+    // revoke old token
+    await redis.del(token as string);
+
+    // generate new token
+    const newToken = crypto.randomBytes(512).toString("hex").normalize();
+    await redis.set(
+      newToken,
+      JSON.stringify({ uid, role }),
+      "EX",
+      60 * 60 * 24, // seconds
+    );
+
+    // get user data
+    const user = await AuthService.getUser(uid);
+
+    res
+      .header("Authorization", `Bearer ${newToken}`)
+      .status(HttpRes.status.OK)
+      .json(ResponseHandler.success(HttpRes.message.OK, user));
   },
 );

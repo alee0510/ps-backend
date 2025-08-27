@@ -12,5 +12,6 @@ authRouter.patch(
   AuthController.SendVerificationEmail,
 );
 authRouter.get("/auth/verify-email", AuthController.VerifyEmail);
+authRouter.get("/auth/refresh-token", AuthController.RefreshToken);
 
 export default authRouter;

@@ -28,7 +28,7 @@ function AuthHandler({ userRole = "user" }: { userRole?: "admin" | "user" }) {
           HttpRes.details.UNAUTHORIZED,
         );
       }
-      
+
       const { uid, role } = JSON.parse(session as string);
       if (userRole === "admin" && role !== "admin") {
         throw new CustomError(

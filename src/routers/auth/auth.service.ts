@@ -19,6 +19,20 @@ export async function searchUser(payload: {
   });
 }
 
+export async function getUser(uid: string) {
+  return await database.user.findFirst({
+    where: { uid },
+    select: {
+      uid: true,
+      username: true,
+      email: true,
+      role: true,
+      verified: true,
+      active: true,
+    },
+  });
+}
+
 export async function createUser(data: {
   username: string;
   email: string;
