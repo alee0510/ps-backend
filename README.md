@@ -112,6 +112,8 @@ backend/
 
 ## Running the Project
 
+### Local Development
+
 - **Development mode (with auto-reload):**
 
   ```sh
@@ -123,6 +125,54 @@ backend/
   npm run build
   npm start
   ```
+
+### Docker Development
+
+#### Building the Docker Image
+
+To build the application Docker image:
+
+```sh
+docker build -t backend-app .
+```
+
+#### Running with Docker Compose
+
+The project includes a complete Docker Compose setup with PostgreSQL and Redis databases.
+
+1. **Create environment file:**
+   Create a `.env.prod` file in the root directory with the required environment variables (see Environment Variables section below).
+
+2. **Start all services:**
+
+   ```sh
+   docker-compose up -d
+   ```
+
+3. **View logs:**
+
+   ```sh
+   docker-compose logs -f
+   ```
+
+4. **Stop all services:**
+
+   ```sh
+   docker-compose down
+   ```
+
+5. **Stop and remove volumes:**
+   ```sh
+   docker-compose down -v
+   ```
+
+#### Docker Compose Services
+
+- **postgres**: PostgreSQL 17 database on port 5432
+- **redis**: Redis 8 database on port 6379
+- **app**: Node.js application on port 2000
+
+The application will automatically run database migrations on startup via the entrypoint script.
 
 ## Linting
 
@@ -714,6 +764,8 @@ export const createArticle = createHandler(
 
 ## Environment Variables
 
+### Local Development Environment
+
 Create a `.env` file in the root directory with the following variables:
 
 ```env
@@ -737,6 +789,44 @@ CLOUD_API_KEY="your-cloudinary-api-key"
 CLOUD_API_SECRET="your-cloudinary-api-secret"
 ```
 
+### Docker Production Environment
+
+For Docker Compose deployment, create a `.env.prod` file in the root directory:
+
+```env
+# Server Configuration
+PORT=2000
+NODE_ENV=production
+
+# Database Configuration (Docker internal networking)
+DATABASE_URL=postgres://postgres:secret@postgres:5432/mydb
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=secret
+POSTGRES_DB=mydb
+
+# Redis Configuration (Docker internal networking)
+REDIS_HOST=redis
+REDIS_PORT=6379
+
+# JWT Configuration
+JWT_SECRET="your-super-secret-jwt-key"
+
+# Email Configuration
+GMAIL_USER="your-email@gmail.com"
+GMAIL_APP_PASSWORD="your-gmail-app-password"
+
+# Cloudinary Configuration
+CLOUD_NAME="your-cloudinary-cloud-name"
+CLOUD_API_KEY="your-cloudinary-api-key"
+CLOUD_API_SECRET="your-cloudinary-api-secret"
+```
+
+**Important Notes for Docker:**
+
+- Use service names (`postgres`, `redis`) as hostnames in Docker Compose
+- The `POSTGRES_*` variables are required for the PostgreSQL container initialization
+- The `DATABASE_URL` should reference the `postgres` service name, not `localhost`
+
 ### Environment Variables Description
 
 | Variable             | Description                               | Required                  | Example                                    |
@@ -744,6 +834,11 @@ CLOUD_API_SECRET="your-cloudinary-api-secret"
 | `PORT`               | Server port number                        | No (default: 2000)        | `3000`                                     |
 | `NODE_ENV`           | Environment mode                          | No (default: development) | `production`                               |
 | `DATABASE_URL`       | PostgreSQL connection string              | Yes                       | `postgresql://user:pass@localhost:5432/db` |
+| `POSTGRES_USER`      | PostgreSQL username (Docker only)         | Yes (Docker)              | `postgres`                                 |
+| `POSTGRES_PASSWORD`  | PostgreSQL password (Docker only)         | Yes (Docker)              | `secret`                                   |
+| `POSTGRES_DB`        | PostgreSQL database name (Docker only)    | Yes (Docker)              | `mydb`                                     |
+| `REDIS_HOST`         | Redis server hostname (Docker only)       | Yes (Docker)              | `redis`                                    |
+| `REDIS_PORT`         | Redis server port (Docker only)           | Yes (Docker)              | `6379`                                     |
 | `JWT_SECRET`         | Secret key for JWT token signing          | Yes                       | `your-super-secret-key-here`               |
 | `GMAIL_USER`         | Gmail address for sending emails          | Yes                       | `your-app@gmail.com`                       |
 | `GMAIL_APP_PASSWORD` | Gmail app password (not regular password) | Yes                       | `abcd efgh ijkl mnop`                      |
