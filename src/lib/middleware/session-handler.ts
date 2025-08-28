@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import cookie from "cookie";
 import crypto from "crypto";
 import redis from "@/lib/redis";
 import { Session, sign, unsign } from "@/lib/utils";
 import env from "@/env";
+const cookie = require("cookie");
 
 // @types
 declare module "express-serve-static-core" {
@@ -25,7 +25,7 @@ export const createSession = (options: {
   secret?: string;
   ttl?: number; // time to live in seconds
   rolling?: boolean; // refresh expiry on every request
-  seveUninitialized?: boolean; // save session even if it's not modified
+  seveUninitialized?: boolean; // save session even if it's not modified or empty {}
 }) => {
   const {
     name = "sid",
@@ -65,13 +65,12 @@ export const createSession = (options: {
 
       // @hook into "finish" event to save session
       res.on("finish", async () => {
+        console.log("FINISH");
+        console.log("SESSION", req.session);
+        console.log("SESSION ID", req.sessionID);
         // check if session exist on request, by default its always empty object
         if (!req.session) return;
-        if (
-          req.session &&
-          Object.keys(req.session).length === 0 && // empty object
-          !seveUninitialized
-        ) {
+        if (req.session && req.session.isEmpty() && !seveUninitialized) {
           return;
         }
 
@@ -92,21 +91,36 @@ export const createSession = (options: {
           const key = `session:${sessionID}`;
           await redis.set(key, JSON.stringify(req.session), "EX", ttl);
         }
-
-        // @set cookie
-
-        const signed = sign(sessionID, secret as string);
-        res.setHeader(
-          "Set-Cookie",
-          cookie.serialize(name, signed, {
-            httpOnly: true,
-            maxAge: ttl,
-            sameSite: "lax", // csrf (cross-site request forgery) protection
-            secure: env.NODE_ENV === "production", // https only
-            path: "/",
-          }),
-        );
       });
+
+      // @override res.end to set cookie before response is sent
+      const originalEnd = res.end.bind(res);
+      res.end = function (chunk?: any, encoding?: any, cb?: any): Response {
+        console.log("END");
+        // @set cookie before ending response
+        if (
+          req.session &&
+          (req.session.isDirty() ||
+            req.session.isTouched() ||
+            rolling)
+        ) {
+          console.log("SET COOKIE");
+          const signed = sign(sessionID as string, secret as string);
+          res.setHeader(
+            "Set-Cookie",
+            cookie.serialize(name, signed, {
+              httpOnly: true,
+              maxAge: ttl,
+              sameSite: "lax", // csrf (cross-site request forgery) protection
+              secure: env.NODE_ENV === "production", // https only
+              path: "/",
+            }),
+          );
+        }
+
+        // @call original end method
+        return originalEnd(chunk, encoding, cb);
+      };
       next();
     } catch (error) {
       next(error);

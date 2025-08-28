@@ -5,9 +5,11 @@ export class Session {
   private dirty = false;
   private destroyed = false;
   private touched = false;
+  private empty = true;
 
   constructor(initial: Record<string, any> = {}) {
     this.data = { ...initial };
+    this.empty = Object.keys(this.data).length === 0;
   }
 
   get(key: string) {
@@ -32,6 +34,10 @@ export class Session {
     return this.dirty;
   }
 
+  isEmpty() {
+    return this.empty;
+  }
+
   touch() {
     this.touched = true;
   }
@@ -51,6 +57,7 @@ export class Session {
 
   replace(newData: Record<string, any> = {}) {
     this.data = { ...newData };
+    this.empty = Object.keys(this.data).length === 0;
     this.dirty = true;
   }
 }
