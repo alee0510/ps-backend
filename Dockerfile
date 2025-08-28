@@ -4,9 +4,11 @@ FROM node:20-alpine AS base
 # set working directory
 WORKDIR /app
 
-# install dependencies
+# copy package.json and prisma folder
 COPY package*.json ./
 COPY prisma ./prisma
+
+# install dependencies
 RUN npm install
 
 # copy src code
@@ -20,8 +22,7 @@ RUN npx prisma generate
 RUN npm run build
 
 # remove dev dependencies
-RUN npm prune --production
-
+RUN npm prune --omit=dev
 
 # PRODUCTION STAGE
 FROM node:20-alpine AS prodcution
@@ -36,10 +37,16 @@ COPY --from=base /app/dist ./dist
 # generate prisma client
 RUN npx prisma generate
 
+# copy entrypoint.sh
+COPY entrypoint.sh ./
+RUN chmod +x entrypoint.sh
+
 # set environment variables
 ENV NODE_ENV=production
 ENV PORT=2000
 ENV DATABASE_URL=$DATABASE_URL
+ENV REDIS_HOST=$REDIS_HOST
+ENV REDIS_PORT=$REDIS_PORT
 ENV JWT_SECRET=$JWT_SECRET
 ENV GMAIL_APP_PASSWORD=$GMAIL_APP_PASSWORD
 ENV GMAIL_USER=$GMAIL_USER
@@ -51,4 +58,4 @@ ENV CLOUD_API_SECRET=$CLOUD_API_SECRET
 EXPOSE 2000
 
 # start the server
-CMD ["node", "dist/server.js"]
+ENTRYPOINT ["./entrypoint.sh"]

@@ -1,9 +1,10 @@
 import Redis from "ioredis";
 import { Logger } from "@/lib/utils";
+import env from "@/env";
 
 const redis = new Redis({
-  host: "localhost",
-  port: 6379,
+  host: env.REDIS_HOST,
+  port: env.REDIS_PORT,
 });
 
 redis.on("connect", () => {
@@ -11,6 +12,7 @@ redis.on("connect", () => {
 });
 redis.on("error", (error: Error) => {
   Logger.error("Redis error:", error);
+  process.exit(1);
 });
 
 export default redis;
