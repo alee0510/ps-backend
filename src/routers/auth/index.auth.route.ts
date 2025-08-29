@@ -13,5 +13,6 @@ authRouter.patch(
 );
 authRouter.get("/auth/verify-email", AuthController.VerifyEmail);
 authRouter.get("/auth/refresh-token", AuthController.RefreshToken);
+authRouter.get("/auth/keep-login", authUser, AuthController.KeepLogin);
 
 export default authRouter;

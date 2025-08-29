@@ -8,7 +8,6 @@ import {
   createHandler,
   transporter,
 } from "@/lib/utils";
-import { CustomRequest } from "@/lib/middleware";
 import {
   RegisterSchema,
   LoginSchema,
@@ -16,7 +15,6 @@ import {
 } from "./auth.validation";
 import * as AuthService from "./auth.service"; // eslint-disable-line
 import redis from "@/lib/redis";
-import { Http } from "winston/lib/winston/transports";
 
 export const Register = createHandler(
   async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
@@ -86,21 +84,18 @@ export const Login = createHandler(
       );
     }
 
-    // do session management -> { key : value } -> { sessionId : { userId, role }}
-    const sessionId = crypto.randomBytes(512).toString("hex").normalize();
-    Logger.info(sessionId, { sessionId: { uid: user.uid, role: user.role } });
-
-    // save session id to db (REDIS)
-    await redis.set(
-      sessionId,
-      JSON.stringify({ uid: user.uid, role: user.role }),
-      "EX",
-      60 * 60 * 24, // seconds
+    // stateless authentication -> JWT token
+    const token = generateToken(
+      {
+        uid: user.uid,
+        role: user.role,
+      },
+      { expiresIn: "5m" },
     );
 
     // return response
     res
-      .header("Authorization", `Bearer ${sessionId}`)
+      .header("Authorization", `Bearer ${token}`)
       .status(HttpRes.status.OK)
       .json(
         ResponseHandler.success(HttpRes.message.OK, {
@@ -126,9 +121,9 @@ export const SendVerificationEmail = createHandler(
     const token = generateToken(
       {
         email,
-        uid: (req as CustomRequest).user.uid,
+        uid: req.user?.uid,
       },
-      { expiresIn: "1m" },
+      { expiresIn: "5m" },
     );
 
     // send email
@@ -185,7 +180,6 @@ export const VerifyEmail = createHandler(
 
 export const RefreshToken = createHandler(
   async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
-    const { role, uid } = (req as CustomRequest).user;
     const token = req.headers.authorization?.split(" ")[1];
 
     // validate token
@@ -214,16 +208,27 @@ export const RefreshToken = createHandler(
     const newToken = crypto.randomBytes(512).toString("hex").normalize();
     await redis.set(
       newToken,
-      JSON.stringify({ uid, role }),
+      JSON.stringify(req.user),
       "EX",
       60 * 60 * 24, // seconds
     );
 
     // get user data
-    const user = await AuthService.getUser(uid);
+    const user = await AuthService.getUser(req.user?.uid || "");
 
     res
       .header("Authorization", `Bearer ${newToken}`)
+      .status(HttpRes.status.OK)
+      .json(ResponseHandler.success(HttpRes.message.OK, user));
+  },
+);
+
+export const KeepLogin = createHandler(
+  async (req, res, next, { CustomError, ResponseHandler, HttpRes }) => {
+    // get user data
+    const user = await AuthService.getUser(req.user?.uid || "");
+
+    res
       .status(HttpRes.status.OK)
       .json(ResponseHandler.success(HttpRes.message.OK, user));
   },
