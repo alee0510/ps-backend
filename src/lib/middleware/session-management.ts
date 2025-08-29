@@ -13,26 +13,27 @@ declare module "express-serve-static-core" {
   }
 }
 
-// @flow
-// not auth -> access resource -> req.session = {} -> res no cookies & no session on Redis;
-// not auth -> do auth -> req.session.replace({ uid, role}) -> req.session.isDirty() -> set cookies & save session to Redis;
-// auth -> access resource -> req.session = new Session({ uid, role}) -> req has cookies & save session to Redis if dirty / rolling;
-// auth -> logout -> req.session.destroy() -> clear cookies & remove session from Redis;
-
-// @middleware
-export const createSession = (options: {
+export type SessionOptions = {
   name?: string;
   secret?: string;
-  ttl?: number; // time to live in seconds
-  rolling?: boolean; // refresh expiry on every request
-  seveUninitialized?: boolean; // save session even if it's not modified or empty {}
-}) => {
+  ttl?: number;
+  rolling?: boolean;
+  saveUninitialized?: boolean;
+};
+
+// @middleware
+/**
+ * ttl (time to live) in seconds
+ * rolling (refresh expiry on every request)
+ * saveUninitialized (save session even if it's not modified or empty {})
+ */
+export const createSession = (options: SessionOptions) => {
   const {
     name = "sid",
     secret,
     ttl = 60 * 60 * 24,
     rolling = false,
-    seveUninitialized = false,
+    saveUninitialized = false,
   } = options;
 
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -70,7 +71,7 @@ export const createSession = (options: {
         console.log("SESSION ID", req.sessionID);
         // check if session exist on request, by default its always empty object
         if (!req.session) return;
-        if (req.session && req.session.isEmpty() && !seveUninitialized) {
+        if (req.session && req.session.isEmpty() && !saveUninitialized) {
           return;
         }
 
@@ -100,9 +101,7 @@ export const createSession = (options: {
         // @set cookie before ending response
         if (
           req.session &&
-          (req.session.isDirty() ||
-            req.session.isTouched() ||
-            rolling)
+          (req.session.isDirty() || req.session.isTouched() || rolling)
         ) {
           console.log("SET COOKIE");
           const signed = sign(sessionID as string, secret as string);
