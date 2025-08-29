@@ -2,6 +2,8 @@ import exprress, { Request, Response, Application } from "express";
 import bodyParser from "body-parser";
 import { errorMiddleware, requestLogger } from "@/lib/middleware";
 
+const cors = require("cors");
+
 // setup express
 const app: Application = exprress();
 
@@ -12,10 +14,16 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // setup middleware: LOGGING
 app.use(requestLogger);
 
+// setup middleware: CORS (Cross-Origin Resource Sharing)
+app.use(
+  cors({
+    exposedHeaders: ["Authorization"],
+    origin: ["http://localhost:3000"],
+  }),
+);
+
 // expose public folder
 app.use("/public", exprress.static("public"));
-
-// setup middleware: CORS (Cross-Origin Resource Sharing)
 
 // define root routes
 app.get("/", (req: Request, res: Response) => {
